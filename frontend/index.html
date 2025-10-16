@@ -24,12 +24,21 @@
       width: 100%;
       text-align: center;
     }
-    h1 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      margin-bottom: 0;
-      line-height: 1.2;
-    }
+h1 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  line-height: 1.2;
+  white-space: nowrap; /* Verhindert den Zeilenumbruch */
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.35rem; /* etwas kleiner, damit alles in eine Zeile passt */
+    white-space: nowrap; /* bleibt in einer Zeile */
+  }
+}
+
     .subtitle {
       font-size: 1.1rem;
       margin-top: 0.3rem;
