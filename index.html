@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gezeiten · Playa del Inglés</title>
+  <link rel="icon" href="🌊" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(180deg, #dff4ff, #f6fbff);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      color: #222;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 2rem;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-top: 0;
+      color: #444;
+    }
+
+    .trend {
+      font-weight: 600;
+      margin: 1rem 0;
+    }
+
+    .trend.up { color: #0b8e21; }
+    .trend.down { color: #c62828; }
+
+    button {
+      background: #f2f2f2;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 0.2rem;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #e8f4ff;
+      border-color: #66aaff;
+    }
+
+    button.active {
+      background: #0078d4;
+      color: white;
+      border-color: #0078d4;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.2rem;
+    }
+
+    th, td {
+      padding: 0.6rem;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+    }
+
+    td {
+      font-size: 1rem;
+    }
+
+    .tag {
+      padding: 0.3rem 0.7rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: white;
+    }
+
+    .high { background: #b9f6ca; color: #0b8e21; }
+    .low { background: #ffcdd2; color: #c62828; }
+
+    footer {
+      margin-top: 1.4rem;
+      font-size: 0.85rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌊 Gezeiten · Playa del Inglés</h1>
+    <h2 id="date"></h2>
+
+    <div id="trend" class="trend">Wird geladen...</div>
+
+    <div>
+      <button id="todayBtn" class="active">Heute</button>
+      <button id="tomorrowBtn">Morgen</button>
+      <button id="dayAfterBtn">Übermorgen</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Zeit</th>
+          <th>Typ</th>
+          <th>Höhe (m)</th>
+        </tr>
+      </thead>
+      <tbody id="tides"></tbody>
+    </table>
+
+    <footer id="footer"></footer>
+  </div>
+
+  <script>
+    async function loadData() {
+      const res = await fetch("latest.json?_=" + Date.now()); // Cache-Buster
+      const data = await res.json();
+      render(data);
+    }
+
+    function render(data) {
+      const { meta, tides } = data;
+
+      // Datum (kanarische Zeit)
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat("de-DE", {
+        timeZone: "Atlantic/Canary",
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+      document.getElementById("date").textContent = formatter.format(now);
+
+      // Tabelle
+      const tbody = document.getElementById("tides");
+      tbody.innerHTML = "";
+
+      tides.forEach(t => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${t.zeit}</td>
+          <td><span class="tag ${t.typ === "Hochwasser" ? "high" : "low"}">${t.typ}</span></td>
+          <td>${t.hoehe_m.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // Trend (steigend/fallend)
+      const trendEl = document.getElementById("trend");
+      const current = getCurrentTideTrend(tides);
+      if (current?.direction === "up") {
+        trendEl.className = "trend up";
+        trendEl.innerHTML = `Das Wasser steigt<br><small>(nächstes Hochwasser um ${current.next})</small>`;
+      } else if (current?.direction === "down") {
+        trendEl.className = "trend down";
+        trendEl.innerHTML = `Das Wasser fällt<br><small>(nächstes Niedrigwasser um ${current.next})</small>`;
+      } else {
+        trendEl.textContent = "Keine Daten verfügbar";
+      }
+
+      // Footer mit Zeitstempel
+      document.getElementById("footer").textContent =
+        `Quelle: tide-forecast.com (geparst) · Aktualisiert ${meta.generatedAt} Uhr (kanarische Zeit)`;
+    }
+
+    function getCurrentTideTrend(tides) {
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const events = tides.map(t => {
+        const [h, m] = t.zeit.split(":").map(Number);
+        return { ...t, mins: h * 60 + m };
+      });
+
+      for (let i = 0; i < events.length - 1; i++) {
+        const cur = events[i], next = events[i + 1];
+        if (nowMins >= cur.mins && nowMins < next.mins) {
+          return {
+            direction: cur.typ === "Niedrigwasser" ? "up" : "down",
+            next: next.zeit,
+          };
+        }
+      }
+      return null;
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
