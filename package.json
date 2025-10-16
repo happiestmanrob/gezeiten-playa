@@ -1,14 +1,8 @@
 {
   "name": "gezeiten-playa",
-  "private": true,
-  "description": "Daily tide scraper for Playa del Inglés (tide-forecast.com) + Open-Meteo astronomy",
-  "license": "MIT",
   "type": "module",
-  "scripts": {
-    "fetch": "node scripts/fetch.js"
-  },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "^1.0.0",
     "node-fetch": "^3.3.2"
   }
 }
