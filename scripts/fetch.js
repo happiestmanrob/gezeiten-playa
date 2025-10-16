@@ -79,15 +79,33 @@ function parseTides(html) {
     const tm = timeTxt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
     if (!tm) return;
 
-    const mMatch = heightTxt.match(/([\d.,]+)\s*m/i);
-    let height = mMatch ? parseFloat(mMatch[1].replace(",", ".")) : null;
+    // --- Höhe verarbeiten ---
+let height = null;
 
-    if (!height) {
-      const ftMatch = heightTxt.match(/([\d.,]+)\s*ft/i);
-      if (ftMatch) {
-        const ft = parseFloat(ftMatch[1].replace(",", "."));
-        height = (ft * 0.3048);
-      }
+// Versuche zuerst explizite Meter
+const mMatch = heightTxt.match(/([\d.,]+)\s*m/i);
+if (mMatch) {
+  height = parseFloat(mMatch[1].replace(",", "."));
+}
+
+// Wenn keine Meter-Angabe, prüfe auf Fuß
+if (height === null) {
+  const ftMatch = heightTxt.match(/([\d.,]+)\s*ft/i);
+  if (ftMatch) {
+    const ft = parseFloat(ftMatch[1].replace(",", "."));
+    height = +(ft * 0.3048).toFixed(2); // in Meter konvertieren
+  }
+}
+
+// Falls gar keine Einheit angegeben ist, gehe von ft aus (Standard tide-forecast.com)
+if (height === null) {
+  const numMatch = heightTxt.match(/([\d.,]+)/);
+  if (numMatch) {
+    const ft = parseFloat(numMatch[1].replace(",", "."));
+    height = +(ft * 0.3048).toFixed(2);
+  }
+}
+
     }
 
     const timeStr = to24h(tm[1], tm[2], tm[3]);
