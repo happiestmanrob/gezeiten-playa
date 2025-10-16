@@ -1,8 +1,12 @@
 {
   "name": "gezeiten-playa",
+  "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "fetch": "node scripts/fetch.js"
+  },
   "dependencies": {
-    "cheerio": "^1.0.0",
-    "node-fetch": "^3.3.2"
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0-rc.12"
   }
 }
