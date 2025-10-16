@@ -1,232 +1,102 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gezeiten · Playa del Inglés</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: linear-gradient(to bottom right, #dff0ff, #e8fff2);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      margin: 0;
-      padding: 2em;
-    }
-    .card {
-      background: white;
-      border-radius: 1.5em;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      padding: 2em 2.5em;
-      max-width: 600px;
-      width: 100%;
-      text-align: center;
-    }
-    h1 {
-      font-size: 1.8em;
-      margin-bottom: 0.2em;
-    }
-    #dateLabel {
-      font-weight: 600;
-      font-size: 1.2em;
-      margin-top: 0.3em;
-    }
-    #trend {
-      font-size: 1.1em;
-      line-height: 1.4em;
-      margin-top: 0.6em;
-      font-weight: 500;
-    }
-    .trend-rise {
-      color: #1a7a3f;
-    }
-    .trend-fall {
-      color: #b22c2c;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1.4em;
-    }
-    th, td {
-      padding: 0.6em;
-      text-align: center;
-      border-bottom: 1px solid #eee;
-    }
-    th {
-      color: #444;
-      font-weight: 600;
-    }
-    .badge {
-      display: inline-block;
-      padding: 0.2em 0.6em;
-      border-radius: 0.6em;
-      font-size: 0.9em;
-    }
-    .high {
-      background: #e6f8ec;
-      color: #267a3f;
-    }
-    .low {
-      background: #fdeaea;
-      color: #a63838;
-    }
-    #source {
-      margin-top: 1.2em;
-      font-size: 0.85em;
-      color: #666;
-    }
-    #dayButtons {
-      margin-top: 1em;
-    }
-    #dayButtons button {
-      background: #f0f4f8;
-      border: 1px solid #ccc;
-      border-radius: 0.5em;
-      padding: 0.4em 0.9em;
-      margin: 0 0.3em;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    #dayButtons button:hover {
-      background: #dcefff;
-      border-color: #7ab8ff;
-    }
+<script>
+const TZ = "Atlantic/Canary";
 
-    /* Responsive Styling */
-    @media (max-width: 600px) {
-      .card {
-        padding: 1.5em;
-      }
-      h1 {
-        font-size: 1.5em;
-      }
-      #trend {
-        font-size: 1em;
-      }
-      table th, table td {
-        padding: 0.4em;
-      }
+function tLocal(iso) {
+  try {
+    return new Date(iso).toLocaleTimeString("de-DE", { 
+      timeZone: TZ, 
+      hour: "2-digit", 
+      minute: "2-digit" 
+    });
+  } catch { 
+    return "–"; 
+  }
+}
+
+function tDate(iso) {
+  return new Date(iso).toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: TZ
+  });
+}
+
+function renderDay(j) {
+  const dateEl = document.getElementById("dateLabel");
+  const trendEl = document.getElementById("trend");
+  const tb = document.getElementById("tbody");
+
+  dateEl.textContent = tDate(j.meta.generatedAt);
+  tb.innerHTML = "";
+
+  (j.tides || []).forEach(e => {
+    const badge = e.type === "High"
+      ? "<span class='badge high'>Hochwasser</span>"
+      : "<span class='badge low'>Niedrigwasser</span>";
+    tb.innerHTML += `
+      <tr>
+        <td>${e.timeStr}</td>
+        <td>${badge}</td>
+        <td>${(e.height ?? 0).toFixed(2)}</td>
+      </tr>`;
+  });
+
+  // --- Trend korrekt bestimmen ---
+  const nowCanary = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+
+  // Nur zukünftige Gezeiten
+  const futureTides = j.tides.filter(t => new Date(t.iso) > nowCanary);
+  const pastTides = j.tides.filter(t => new Date(t.iso) <= nowCanary);
+
+  const next = futureTides.length ? futureTides[0] : null;
+  const prev = pastTides.length ? pastTides[pastTides.length - 1] : null;
+
+  let trendTxt = "–";
+  let trendClass = "";
+
+  if (next && prev) {
+    // Wenn letztes Ereignis schon länger als 30 Min her ist → auf das nächste schauen
+    const diffMin = (nowCanary - new Date(prev.iso)) / 60000;
+    const rising = next.type === "High";
+    const falling = next.type === "Low";
+
+    if (rising && diffMin >= 0) {
+      trendTxt = `Das Wasser steigt<br><span style="font-size:0.95em;">(nächstes Hochwasser um ${next.timeStr} Uhr)</span>`;
+      trendClass = "trend-rise";
+    } else if (falling && diffMin >= 0) {
+      trendTxt = `Das Wasser fällt<br><span style="font-size:0.95em;">(nächstes Niedrigwasser um ${next.timeStr} Uhr)</span>`;
+      trendClass = "trend-fall";
     }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>🌊 Gezeiten · Playa del Inglés</h1>
-    <p id="dateLabel">–</p>
-    <p id="trend">–</p>
-
-    <div id="dayButtons">
-      <button onclick="loadDay(0)">Heute</button>
-      <button onclick="loadDay(1)">Morgen</button>
-      <button onclick="loadDay(2)">Übermorgen</button>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Zeit</th>
-          <th>Typ</th>
-          <th>Höhe (m)</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="3">Lade Daten...</td></tr>
-      </tbody>
-    </table>
-
-    <p id="source"></p>
-  </div>
-
-  <script>
-    const TZ = "Atlantic/Canary";
-
-    function tLocal(iso) {
-      try {
-        return new Date(iso).toLocaleTimeString("de-DE", { 
-          timeZone: TZ, 
-          hour: "2-digit", 
-          minute: "2-digit" 
-        });
-      } catch { 
-        return "–"; 
-      }
+  } 
+  else if (next) {
+    // Nur ein zukünftiges Ereignis vorhanden
+    if (next.type === "High") {
+      trendTxt = `Das Wasser steigt<br><span style="font-size:0.95em;">(nächstes Hochwasser um ${next.timeStr} Uhr)</span>`;
+      trendClass = "trend-rise";
+    } else {
+      trendTxt = `Das Wasser fällt<br><span style="font-size:0.95em;">(nächstes Niedrigwasser um ${next.timeStr} Uhr)</span>`;
+      trendClass = "trend-fall";
     }
+  }
 
-    function tDate(iso) {
-      return new Date(iso).toLocaleDateString("de-DE", {
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        timeZone: TZ
-      });
-    }
+  trendEl.innerHTML = trendTxt;
+  trendEl.className = trendClass;
 
-    function renderDay(j) {
-      const dateEl = document.getElementById("dateLabel");
-      const trendEl = document.getElementById("trend");
-      const tb = document.getElementById("tbody");
+  document.getElementById("source").textContent =
+    `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
+}
 
-      dateEl.textContent = tDate(j.meta.generatedAt);
-      tb.innerHTML = "";
+async function loadDay(offset = 0) {
+  try {
+    const res = await fetch(`data.json?cb=${Date.now()}`);
+    const j = await res.json();
+    renderDay(j);
+  } catch (e) {
+    document.getElementById("tbody").innerHTML = `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
+  }
+}
 
-      (j.tides || []).forEach(e => {
-        const badge = e.type === "High"
-          ? "<span class='badge high'>Hochwasser</span>"
-          : "<span class='badge low'>Niedrigwasser</span>";
-        tb.innerHTML += `
-          <tr>
-            <td>${e.timeStr}</td>
-            <td>${badge}</td>
-            <td>${(e.height ?? 0).toFixed(2)}</td>
-          </tr>`;
-      });
-
-      // --- Trend bestimmen (korrekt nach Kanaren-Zeit) ---
-      const nowCanary = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
-      const futureTides = j.tides.filter(t => new Date(t.iso) > nowCanary);
-
-      const next = futureTides.length ? futureTides[0] : null;
-      const prev = j.tides.slice().reverse().find(t => new Date(t.iso) <= nowCanary);
-
-      let trendTxt = "–";
-      let trendClass = "";
-
-      if (next && prev) {
-        const rising = prev.type === "Low" && next.type === "High";
-        const falling = prev.type === "High" && next.type === "Low";
-
-        if (rising) {
-          trendTxt = `Das Wasser steigt<br><span style="font-size:0.95em;">(nächstes Hochwasser um ${next.timeStr} Uhr)</span>`;
-          trendClass = "trend-rise";
-        } else if (falling) {
-          trendTxt = `Das Wasser fällt<br><span style="font-size:0.95em;">(nächstes Niedrigwasser um ${next.timeStr} Uhr)</span>`;
-          trendClass = "trend-fall";
-        }
-      }
-
-      trendEl.innerHTML = trendTxt;
-      trendEl.className = trendClass;
-
-      document.getElementById("source").textContent =
-        `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
-    }
-
-    // Lädt Daten (aktuell nur "heute")
-    async function loadDay(offset = 0) {
-      try {
-        const res = await fetch(`data.json?cb=${Date.now()}`);
-        const j = await res.json();
-        renderDay(j);
-      } catch (e) {
-        document.getElementById("tbody").innerHTML = `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
-      }
-    }
-
-    loadDay();
-  </script>
-</body>
-</html>
+loadDay();
+</script>
