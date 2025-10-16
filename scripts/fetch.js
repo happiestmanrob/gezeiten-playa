@@ -2,6 +2,13 @@
 // Holt exakte Tageszeiten von tide-forecast.com (Playa del Inglés),
 // ergänzt Sonne/Mond (Open-Meteo) und erzeugt public/latest.json
 
+
+// CommonJS-Fallback
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+global.File = class {};
+
+
+
 const fs = require("fs");
 const path = require("path");
 const cheerio = require("cheerio");
