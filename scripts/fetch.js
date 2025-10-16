@@ -17,50 +17,48 @@ async function scrapeTides() {
 
   const days = [];
 
-  // Finde ALLE h3-Überschriften mit Tagesinfos
-  $("h3").each((_, el) => {
-    const title = $(el).text().trim();
-    if (!title.match(/Playa del Ingles/i)) return;
+  // Jeder Tag ist in einem .tide-day-Container
+  $(".tide-day").each((_, el) => {
+    const title = $(el).find("h4.tide-day__date").text().trim();
+    if (!title.includes("Playa del Ingles")) return;
 
-    // Versuche, das Datum aus dem Text zu extrahieren
-    const dateMatch = title.match(/([A-Za-z]+day) (\d{1,2}) ([A-Za-z]+) (\d{4})/);
+    const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
     if (!dateMatch) return;
 
     const [, , day, month, year] = dateMatch;
-    const dateStr = `${day} ${month} ${year}`;
     const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
-
-    // Tabelle direkt nach der Überschrift suchen
-    const table = $(el).next("table");
-    if (!table.length) return;
 
     const tides = [];
 
-    table.find("tr").each((_, row) => {
-      const cols = $(row).find("td");
-      if (cols.length < 3) return;
+    // Tabellenzeilen durchlaufen
+    $(el)
+      .find("table.tide-day-tides tbody tr")
+      .each((_, row) => {
+        const cols = $(row).find("td");
+        if (cols.length < 3) return;
 
-      const typeText = $(cols[0]).text().trim();
-      const timeText = $(cols[1]).text().trim().split(/\s+/)[0];
-      const heightText = $(cols[2]).text().trim();
+        const typeText = $(cols[0]).text().trim();
+        const timeText = $(cols[1]).text().trim().split(/\s+/)[0];
+        const heightText = $(cols[2]).text().trim();
 
-      if (!typeText || !timeText || !heightText) return;
+        if (!typeText || !timeText || !heightText) return;
 
-      const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
-      const meterMatch = heightText.match(/([\d.]+)\s*m/);
-      const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
+        const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
+        const meterMatch = heightText.match(/([\d.]+)\s*m/);
+        const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
 
-      if (!hoehe_m) return;
+        if (!hoehe_m) return;
 
-      tides.push({
-        zeit: timeText.replace(/^0/, ""), // z.B. "04:27" statt "04:27 AM"
-        typ,
-        hoehe_m,
+        tides.push({
+          zeit: timeText.replace(/^0/, ""),
+          typ,
+          hoehe_m,
+        });
       });
-    });
 
     if (tides.length) {
       days.push({ date: dateISO, tides });
+      console.log(`📅 ${dateISO}: ${tides.length} Einträge`);
     }
   });
 
