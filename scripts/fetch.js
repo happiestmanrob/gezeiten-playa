@@ -1,72 +1,90 @@
-import axios from "axios";
-import * as cheerio from "cheerio";
+// scripts/fetch.js
 import fs from "fs";
+import path from "path";
+import fetch from "node-fetch";
+import * as cheerio from "cheerio";
 
-const url = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
+const URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
 
-function toISODate(text) {
-  // Wandelt z. B. "Friday 17 October 2025" → "2025-10-17"
-  const months = {
-    january: "01", february: "02", march: "03", april: "04",
-    may: "05", june: "06", july: "07", august: "08",
-    september: "09", october: "10", november: "11", december: "12"
-  };
-  const m = text.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
-  if (!m) return null;
-  const d = m[1].padStart(2, "0");
-  const mo = months[m[2].toLowerCase()];
-  const y = m[3];
-  return `${y}-${mo}-${d}`;
-}
-
-async function fetchTides() {
+async function scrapeTides() {
   console.log("🌊 Lade Gezeiten für Playa del Inglés ...");
-  const { data } = await axios.get(url);
-  const $ = cheerio.load(data);
+  console.log("🔗 URL:", URL);
+
+  const res = await fetch(URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status} beim Laden der Seite.`);
+  const html = await res.text();
+  const $ = cheerio.load(html);
 
   const days = [];
 
+  // Jeder Tag ist in einem .tide-day-Container
   $(".tide-day").each((_, el) => {
-    const dateText = $(el).find(".tide-day__date").text().trim();
-    const isoDate = toISODate(dateText);
-    if (!isoDate) return;
+    const title = $(el).find("h4.tide-day__date").text().trim();
+    if (!title.includes("Playa del Ingles")) return;
 
-    const entries = [];
+    const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+    if (!dateMatch) return;
+
+    const [, , day, month, year] = dateMatch;
+    const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
+
+    const tides = [];
+
+    // Tabellenzeilen durchlaufen
     $(el)
       .find("table.tide-day-tides tbody tr")
-      .each((_, tr) => {
-        const tds = $(tr).find("td");
-        if (tds.length >= 3) {
-          const typeRaw = $(tds[0]).text().trim();
-          const time = $(tds[1]).text().trim();
-          const height = $(tds[2]).text().trim().split(" ")[0];
-          const type =
-            typeRaw.toLowerCase().includes("high") ? "Hochwasser" : "Niedrigwasser";
-          if (type && time && height) entries.push({ type, time, height });
-        }
+      .each((_, row) => {
+        const cols = $(row).find("td");
+        if (cols.length < 3) return;
+
+        const typeText = $(cols[0]).text().trim();
+        const timeText = $(cols[1]).text().trim().split(/\s+/)[0];
+        const heightText = $(cols[2]).text().trim();
+
+        if (!typeText || !timeText || !heightText) return;
+
+        const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
+        const meterMatch = heightText.match(/([\d.]+)\s*m/);
+        const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
+
+        if (!hoehe_m) return;
+
+        tides.push({
+          zeit: timeText.replace(/^0/, ""),
+          typ,
+          hoehe_m,
+        });
       });
 
-    const sunrise = $(el).find('img[src*="sunrise.svg"]').next(".tide-day__value").text().trim();
-    const sunset = $(el).find('img[src*="sunset.svg"]').next(".tide-day__value").text().trim();
-    const moonrise = $(el).find('img[src*="moonrise.svg"]').next(".tide-day__value").text().trim();
-    const moonset = $(el).find('img[src*="moonset.svg"]').next(".tide-day__value").text().trim();
-
-    days.push({
-      date: isoDate,
-      tides: entries,
-      sun: { sunrise, sunset },
-      moon: { moonrise, moonset }
-    });
+    if (tides.length) {
+      days.push({ date: dateISO, tides });
+      console.log(`📅 ${dateISO}: ${tides.length} Einträge`);
+    }
   });
 
-  const output = {
-    location: "Playa del Inglés",
-    meta: { generatedAt: new Date().toISOString() },
-    days
+  if (!days.length) {
+    throw new Error("❌ Keine Gezeiten-Tabelle gefunden!");
+  }
+
+  const result = {
+    meta: {
+      location: "Playa del Inglés",
+      timezone: "Atlantic/Canary",
+      generatedAt: new Date().toISOString(),
+    },
+    days,
   };
 
-  fs.writeFileSync("./public/latest.json", JSON.stringify(output, null, 2), "utf8");
-  console.log(`✅ ${days.length} Tage erfolgreich gespeichert.`);
+  const outputDir = path.resolve("public");
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const outputFile = path.join(outputDir, "latest.json");
+  fs.writeFileSync(outputFile, JSON.stringify(result, null, 2), "utf8");
+
+  console.log(`✅ Erfolgreich geschrieben: ${outputFile} (${days.length} Tage)`);
 }
 
-fetchTides().catch((err) => console.error("❌ Fehler:", err));
+scrapeTides().catch((err) => {
+  console.error("🚨 Fehler:", err.message);
+  process.exit(1);
+});
