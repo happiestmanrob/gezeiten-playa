@@ -35,12 +35,20 @@
     }
     #trend {
       font-size: 1.1em;
-      margin-top: 0.4em;
+      line-height: 1.4em;
+      margin-top: 0.6em;
+      font-weight: 500;
+    }
+    .trend-rise {
+      color: #1a7a3f;
+    }
+    .trend-fall {
+      color: #b22c2c;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1em;
+      margin-top: 1.4em;
     }
     th, td {
       padding: 0.6em;
@@ -66,7 +74,7 @@
       color: #a63838;
     }
     #source {
-      margin-top: 1em;
+      margin-top: 1.2em;
       font-size: 0.85em;
       color: #666;
     }
@@ -85,6 +93,22 @@
     #dayButtons button:hover {
       background: #dcefff;
       border-color: #7ab8ff;
+    }
+
+    /* Responsive Styling */
+    @media (max-width: 600px) {
+      .card {
+        padding: 1.5em;
+      }
+      h1 {
+        font-size: 1.5em;
+      }
+      #trend {
+        font-size: 1em;
+      }
+      table th, table td {
+        padding: 0.4em;
+      }
     }
   </style>
 </head>
@@ -161,27 +185,31 @@
           </tr>`;
       });
 
-      // Trend bestimmen (steigend oder fallend)
-      const now = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
-      const next = j.tides.find(t => new Date(t.iso) > now);
-      const prev = j.tides.slice().reverse().find(t => new Date(t.iso) <= now);
+      // --- Trend bestimmen (korrekt nach Kanaren-Zeit) ---
+      const nowCanary = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+      const futureTides = j.tides.filter(t => new Date(t.iso) > nowCanary);
+
+      const next = futureTides.length ? futureTides[0] : null;
+      const prev = j.tides.slice().reverse().find(t => new Date(t.iso) <= nowCanary);
+
       let trendTxt = "–";
-      let trendColor = "black";
+      let trendClass = "";
 
       if (next && prev) {
         const rising = prev.type === "Low" && next.type === "High";
         const falling = prev.type === "High" && next.type === "Low";
+
         if (rising) {
-          trendTxt = `Das Wasser steigt (nächstes Hochwasser um ${next.timeStr} Uhr)`;
-          trendColor = "#1a7a3f";
+          trendTxt = `Das Wasser steigt<br><span style="font-size:0.95em;">(nächstes Hochwasser um ${next.timeStr} Uhr)</span>`;
+          trendClass = "trend-rise";
         } else if (falling) {
-          trendTxt = `Das Wasser fällt (nächstes Niedrigwasser um ${next.timeStr} Uhr)`;
-          trendColor = "#b22c2c";
+          trendTxt = `Das Wasser fällt<br><span style="font-size:0.95em;">(nächstes Niedrigwasser um ${next.timeStr} Uhr)</span>`;
+          trendClass = "trend-fall";
         }
       }
 
-      trendEl.textContent = trendTxt;
-      trendEl.style.color = trendColor;
+      trendEl.innerHTML = trendTxt;
+      trendEl.className = trendClass;
 
       document.getElementById("source").textContent =
         `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
