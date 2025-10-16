@@ -8,10 +8,10 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 global.File = class {};
 
 
+import fs from "fs";
+import fetch from "node-fetch";
+import * as cheerio from "cheerio";
 
-const fs = require("fs");
-const path = require("path");
-const cheerio = require("cheerio");
 
 // ---- Konfiguration ----
 const TIDE_URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
