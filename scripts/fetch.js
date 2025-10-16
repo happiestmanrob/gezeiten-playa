@@ -134,29 +134,48 @@ async function fetchAstronomy() {
     iso: attachDateToTimeStr(t.timeStr, TIMEZONE)
   }));
 
+// Trend berechnen (steigt oder fällt)
+let trend = "unbekannt";
+if (tidesWithIso.length >= 2) {
+  const diff = tidesWithIso[1].height - tidesWithIso[0].height;
+  trend = diff > 0 ? "Das Wasser steigt" : "Das Wasser fällt";
+}
+
+
+
+
+  
   const astro = await fetchAstronomy();
 
   const out = {
-    meta: {
-      location: "Playa del Inglés",
-      lat: LAT,
-      lon: LON,
-      timezone: TIMEZONE,
-      generatedAt: new Date().toISOString(),
-      source: {
-        tides: "tide-forecast.com (parsed)",
-        astronomy: "Open-Meteo"
-      }
-    },
-    tides: tidesWithIso,
-    astronomy: astro
-  };
+  meta: {
+    location: "Playa del Inglés",
+    timezone: TIMEZONE,
+    generatedAt: new Date().toISOString(),
+    trend, // Neu hinzugefügt
+    source: {
+      tides: "tide-forecast.com (geparst)",
+      astronomy: "Open-Meteo"
+    }
+  },
+  tides: tidesWithIso.map(t => ({
+    zeit: t.timeStr,
+    typ: t.type === "High" ? "Hochwasser" : "Niedrigwasser",
+    hoehe: t.height
+  })),
+  astronomy: {
+    sonnenaufgang: astro.sunrise ? astro.sunrise.split("T")[1] : null,
+    sonnenuntergang: astro.sunset ? astro.sunset.split("T")[1] : null,
+    mondphase: astro.moonPhaseName || astro.moonPhase
+  }
+};
+
 
   // Schreiben
   const outDir = path.join(process.cwd(), "public");
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "latest.json"), JSON.stringify(out, null, 2));
-  console.log("✅ Wrote public/latest.json with", tidesWithIso.length, "entries");
+  console.log("✅ Gezeiten aktualisiert:", trend, "—", tidesWithIso.length, "Einträge");
 })().catch(err => {
   console.error("❌ Fetch failed:", err);
   process.exit(1);
