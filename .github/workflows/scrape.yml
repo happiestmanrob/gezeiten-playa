@@ -1,9 +1,7 @@
 name: Scrape tides and deploy
 
 on:
-  schedule:
-    - cron: "0 5 * * *"   # Läuft täglich um 05:00 UTC (~06:00 Kanaren)
-  workflow_dispatch:      # Manuell startbar
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,18 +14,19 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install
 
-      - name: Fetch tide data (heute + 2 Tage)
+      - name: Run tide fetch script
         run: node scripts/fetch.js
 
-      - name: Copy frontend to public
+      - name: Verify output files
         run: |
-          mkdir -p public
-          cp frontend/index.html public/index.html
+          echo "Inhalt des public-Verzeichnisses:"
+          ls -la public
+          echo "Falls latest.json fehlt, wurde sie nicht erzeugt!"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
