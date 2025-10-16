@@ -1,140 +1,153 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gezeiten · Playa del Inglés</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: "Inter", system-ui, sans-serif;
-      background: linear-gradient(135deg, #dceafe, #e8fff8);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
+    :root{
+      --bg1:#e8f0ff; --bg2:#dff7ef;
+      --card:#ffffff; --muted:#667085;
+      --hi:#16a34a20; --lo:#ef444420;
+      --pill:#f1f5f9; --ring:#e2e8f0;
     }
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      margin: 3rem 1rem;
-      padding: 2rem 2.5rem;
-      max-width: 650px;
-      width: 100%;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto;
+      background:radial-gradient(1200px 600px at 20% 10%,var(--bg1),transparent) no-repeat,
+                 radial-gradient(1200px 600px at 80% 90%,var(--bg2),transparent) no-repeat,
+                 #f6fbff;
+      color:#0f172a;
+      display:flex; align-items:flex-start; justify-content:center;
     }
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 0.2em;
-      display: flex;
-      align-items: center;
-      gap: 0.5em;
+    .wrap{width:100%; max-width:980px; padding:48px 16px}
+    .card{
+      background:var(--card); border:1px solid var(--ring);
+      border-radius:18px; padding:28px 28px 8px; box-shadow:0 20px 40px rgba(2,6,23,.06);
     }
-    h2#trend {
-      font-weight: 500;
-      text-align: center;
-      color: #333;
-      margin-top: 0.5em;
-      margin-bottom: 0.8em;
-      font-size: 1.1rem;
+    h1{margin:0 0 6px; font-size:26px}
+    .meta{color:var(--muted); font-size:14px; margin-bottom:6px}
+    .date{font-weight:700; text-align:center; margin:16px 0 6px}
+    .trend{
+      text-align:center; color:#0f172a; font-weight:600; margin:0 0 14px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1em;
+    table{width:100%; border-collapse:collapse; margin-top:6px}
+    th,td{padding:14px 12px; border-bottom:1px solid var(--ring); text-align:left}
+    th{font-size:14px; color:var(--muted); font-weight:600}
+    .badge{
+      display:inline-block; padding:4px 10px; border-radius:9999px; font-weight:600; font-size:12px;
     }
-    th, td {
-      text-align: left;
-      padding: 0.6em;
-      border-bottom: 1px solid #e3e3e3;
-    }
-    th {
-      color: #666;
-      font-weight: 600;
-    }
-    td {
-      font-size: 0.95rem;
-    }
-    .badge {
-      padding: 0.25em 0.6em;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
-    .badge.high { background: #e8f7ee; color: #187d39; }
-    .badge.low  { background: #feeaea; color: #b22727; }
-    .footer {
-      font-size: 0.8rem;
-      text-align: center;
-      color: #666;
-      margin-top: 1.5em;
-    }
+    .high{background:var(--hi); color:#166534}
+    .low{background:var(--lo); color:#9a3412}
+    .src{font-size:12px; color:var(--muted); text-align:center; margin:18px 0 10px}
+    .jsonlink{float:right; font-size:13px}
+    @media (max-width:640px){ th,td{padding:10px 8px} .wrap{padding:32px 12px} }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🌊 Gezeiten · Playa del Inglés</h1>
-    <p id="meta" style="margin-top:0; color:#666;">–</p>
-    <h3 id="dateLabel" style="margin:0; text-align:center;"></h3>
-    <h2 id="trend">–</h2>
+  <main class="wrap">
+    <section class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div>
+          <h1>Gezeiten · Playa del Inglés</h1>
+          <div class="meta" id="meta">Playa del Inglés · Zeiten in Atlantic/Canary</div>
+        </div>
+        <a class="jsonlink" href="latest.json" target="_blank">📄 JSON</a>
+      </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Zeit</th>
-          <th>Typ</th>
-          <th>Höhe (m)</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="3">Lade Daten …</td></tr>
-      </tbody>
-    </table>
+      <div class="date" id="dateLabel">–</div>
+      <div class="trend" id="trend"> </div>
 
-    <p id="source" class="footer"></p>
-  </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:22%">Zeit</th>
+            <th style="width:28%">Typ</th>
+            <th style="width:20%">Höhe (m)</th>
+            <th style="width:auto"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="4" style="text-align:center;color:#64748b;">Lade Daten…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="src" id="source"> </div>
+    </section>
+  </main>
 
   <script>
     const TZ = "Atlantic/Canary";
 
-    fetch("data.json?cb=" + Date.now())
+    function tLocal(iso) {
+      try {
+        return new Date(iso).toLocaleTimeString("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+      } catch { return "–"; }
+    }
+
+    function nowTz() {
+      return new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+    }
+
+    function computeTrend(tides) {
+      if (!tides || !tides.length) return { text: "–", next: null };
+      const now = nowTz();
+      // nächstes Ereignis
+      const upcoming = tides
+        .map(t => ({ ...t, when: new Date(t.iso) }))
+        .filter(t => t.when >= now)
+        .sort((a,b) => a.when - b.when)[0] || null;
+
+      if (!upcoming) return { text: "–", next: null };
+      const rising = upcoming.type === "High";
+      const when = tLocal(upcoming.iso);
+      return {
+        text: rising
+          ? `Das Wasser steigt (nächstes Hochwasser um ${when})`
+          : `Das Wasser fällt (nächstes Niedrigwasser um ${when})`,
+        next: upcoming
+      };
+    }
+
+    fetch("latest.json?cb=" + Date.now())
       .then(r => r.json())
       .then(j => {
         document.getElementById("meta").textContent =
           `${j.meta.location} · Zeiten in ${j.meta.timezone}`;
         document.getElementById("dateLabel").textContent =
-          new Date().toLocaleDateString("de-DE", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-          });
+          new Date().toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 
-        // Trend direkt unter dem Datum anzeigen
-        const trendEl = document.getElementById("trend");
-        if (j.meta.trend && j.tides?.length > 1) {
-          trendEl.textContent = `${j.meta.trend} (nächstes ${j.tides[1].typ} um ${j.tides[1].zeit} Uhr)`;
-        } else {
-          trendEl.textContent = "–";
-        }
-
+        // Tabelle
         const tb = document.getElementById("tbody");
         tb.innerHTML = "";
         (j.tides || []).forEach(e => {
-          const badge =
-            e.typ === "Hochwasser"
-              ? "<span class='badge high'>Hochwasser</span>"
-              : "<span class='badge low'>Niedrigwasser</span>";
-          tb.innerHTML += `<tr><td>${e.zeit}</td><td>${badge}</td><td>${e.hoehe.toFixed(2)}</td></tr>`;
+          const badge = e.type === "High"
+            ? "<span class='badge high'>Hochwasser</span>"
+            : "<span class='badge low'>Niedrigwasser</span>";
+          const displayTime = e.timeStr || tLocal(e.iso);
+          const h = (e.height ?? 0).toFixed(2);
+          tb.innerHTML += `<tr>
+            <td>${displayTime}</td>
+            <td>${badge}</td>
+            <td>${h}</td>
+            <td></td>
+          </tr>`;
         });
 
+        // Trend unter dem Datum
+        const t = computeTrend(j.tides);
+        document.getElementById("trend").textContent = t.text;
+
+        // Quelle
         document.getElementById("source").textContent =
-          `Quelle: tide-forecast.com (geparst) · Open-Meteo · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE",{ timeZone: TZ })}`;
+          `Quelle: ${j.meta.source} · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE",{timeZone:TZ})}`;
       })
       .catch(e => {
         document.getElementById("tbody").innerHTML =
-          `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
+          `<tr><td colspan="4" style="text-align:center;color:#dc2626">Fehler: ${e.message}</td></tr>`;
       });
   </script>
 </body>
