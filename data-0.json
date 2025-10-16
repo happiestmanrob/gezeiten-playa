@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "location": "Playa del Inglés",
+    "lat": 27.7416,
+    "lon": -15.5989,
+    "timezone": "Atlantic/Canary",
+    "generatedAt": "2025-10-16T17:39:45.918Z",
+    "dayOffset": 0,
+    "source": "tide-forecast.com (parsed)"
+  },
+  "tides": [
+    {
+      "type": "Low",
+      "timeStr": "04:27",
+      "height": 2.1,
+      "iso": "2025-10-16T04:27:00.000Z"
+    },
+    {
+      "type": "High",
+      "timeStr": "10:39",
+      "height": 5.51,
+      "iso": "2025-10-16T10:39:00.000Z"
+    },
+    {
+      "type": "Low",
+      "timeStr": "17:14",
+      "height": 1.31,
+      "iso": "2025-10-16T17:14:00.000Z"
+    },
+    {
+      "type": "High",
+      "timeStr": "23:23",
+      "height": 5.15,
+      "iso": "2025-10-16T23:23:00.000Z"
+    }
+  ]
+}
