@@ -7,12 +7,11 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 global.File = class {};
 
-
-import fs from "fs";
-import * as cheerio from "cheerio";
 import path from "path";
 import fs from "fs";
 import * as cheerio from "cheerio";
+
+
 
 
 // Node 18+ hat fetch bereits eingebaut — kein Import nötig!
