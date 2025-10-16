@@ -40,12 +40,21 @@ function extractMeters(text) {
   return parseFloat(val.replace(",", "."));
 }
 
+
 function parseTides(html) {
   const $ = cheerio.load(html);
   const rows = [];
-  const table = $('h2:contains("Today\'s tide times for Playa del Ingles")')
-    .nextAll("table")
-    .first();
+
+  // Suche die erste Tabelle, die sowohl "Tide" als auch "Height" enthält:
+  const table = $("table").filter((_, el) => {
+    const text = $(el).text();
+    return /Tide/i.test(text) && /Height/i.test(text);
+  }).first();
+
+  if (!table || table.length === 0) {
+    console.warn("⚠️ Keine Gezeiten-Tabelle gefunden!");
+    return [];
+  }
 
   table.find("tbody tr").each((_, tr) => {
     const tds = $(tr).find("td");
@@ -55,15 +64,36 @@ function parseTides(html) {
     const timeTxt = $(tds[1]).text().trim();
     const heightTxt = $(tds[2]).text().trim();
 
+    // Zeit extrahieren (z. B. "4:27 AM")
     const tm = timeTxt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    const height = extractMeters(heightTxt);
-    if (!tm || height == null) return;
+    if (!tm) return;
+
+    // Höhe (Meter) richtig erkennen:
+    const mMatch = heightTxt.match(/([\d.,]+)\s*m/i);
+    let height = mMatch ? parseFloat(mMatch[1].replace(",", ".")) : null;
+
+    // Wenn keine Meterangabe, aber eine Fuß-Angabe existiert:
+    if (!height) {
+      const ftMatch = heightTxt.match(/([\d.,]+)\s*ft/i);
+      if (ftMatch) {
+        const ft = parseFloat(ftMatch[1].replace(",", "."));
+        height = (ft * 0.3048); // Umrechnung ft → m
+      }
+    }
 
     const timeStr = to24h(tm[1], tm[2], tm[3]);
     const type = /high/i.test(typeTxt) ? "High" : "Low";
 
     rows.push({ timeStr, type, height });
   });
+
+  console.log(`✅ ${rows.length} Gezeiten-Einträge gefunden`);
+  return rows;
+}
+
+
+
+
   return rows.slice(0, 4);
 }
 
