@@ -118,6 +118,7 @@ function parseLiveTrend(html) {
     trend
   };
 
-  fs.writeFileSync(path.join(OUTDIR, "latest.json"), JSON.stringify(out, null, 2));
-  console.log("✅ public/latest.json geschrieben mit", tides.length, "Einträgen");
+fs.writeFileSync(path.join(OUTDIR, "latest.json"), JSON.stringify(out, null, 2));
+console.log("✅ public/latest.json geschrieben mit", tides.length, "Einträgen");
+
 })();
