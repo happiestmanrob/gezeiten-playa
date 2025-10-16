@@ -1,7 +1,6 @@
 // scripts/fetch.js
-// Holt Gezeiten-Daten von tide-forecast.com für Playa del Inglés
-// und erstellt 3 Dateien (data-0.json, data-1.json, data-2.json)
-// für heute, morgen und übermorgen.
+// Lädt Tiden-Daten von tide-forecast.com für Playa del Inglés
+// und schreibt 3 JSON-Dateien: data-0.json (heute), data-1.json (morgen), data-2.json (übermorgen)
 
 import fs from "fs";
 import path from "path";
@@ -10,12 +9,12 @@ import fetch from "node-fetch";
 
 // ---- Konfiguration ----
 const BASE_URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
-const LAT = 27.7416;
-const LON = -15.5989;
 const TIMEZONE = "Atlantic/Canary";
-const OUT_DIR = path.join(process.cwd(), "public");
+const OUTPUT_DIR = path.join(process.cwd(), "public");
 
-// ---- Helper-Funktionen ----
+if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+
+// ---- Helper ----
 function pad(n) { return String(n).padStart(2, "0"); }
 
 function to24h(h, m, ampm) {
@@ -26,106 +25,90 @@ function to24h(h, m, ampm) {
   return `${pad(hour)}:${pad(min)}`;
 }
 
-function toIsoForDay(baseDate, timeStr, tz) {
-  const [hh, mm] = timeStr.split(":").map(Number);
-  const d = new Date(baseDate.toLocaleString("en-US", { timeZone: tz }));
-  d.setHours(hh, mm, 0, 0);
-  return d.toISOString();
+function localNow(tz) {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
 }
 
-// ---- HTML abrufen ----
 async function fetchHtml(url) {
   const res = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; GezeitenBot/1.0; +https://github.com/)",
-      "Accept": "text/html,application/xhtml+xml",
-    },
+      "User-Agent": "Mozilla/5.0 (compatible; GezeitenBot/1.0; +https://github.com/happiestmanrob/gezeiten-playa)",
+      "Accept": "text/html"
+    }
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} beim Abrufen von ${url}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status} while fetching ${url}`);
   return await res.text();
 }
 
-// ---- Gezeiten aus HTML parsen ----
 function parseTides(html) {
   const $ = cheerio.load(html);
-  const h2 = $('h2:contains("Today\'s tide times for Playa del Ingles")').first();
-  let rows = [];
+  const rows = [];
 
-  if (h2.length) {
-    const table = h2.parent().find("table").first();
-    table.find("tbody tr").each((_, tr) => {
-      const tds = $(tr).find("td");
-      const typeTxt = $(tds[0]).text().trim();
-      const timeTxt = $(tds[1]).text().trim();
-      const heightTxt = $(tds[2]).text().trim();
+  const table = $('h2:contains("Today\'s tide times for Playa del Ingles")')
+    .nextAll("table")
+    .first();
 
-      const m = timeTxt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (!m) return;
+  table.find("tbody tr").each((_, tr) => {
+    const tds = $(tr).find("td");
+    const typeTxt = $(tds[0]).text().trim();
+    const timeTxt = $(tds[1]).text().trim();
+    const heightTxt = $(tds[2]).text().trim();
 
-      const timeStr = to24h(m[1], m[2], m[3]);
-      const height = parseFloat((heightTxt.match(/([\d.]+)/) || [])[1]);
-      const type = /high/i.test(typeTxt) ? "High" : "Low";
+    const m = timeTxt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!m) return;
 
-      rows.push({ type, timeStr, height });
-    });
-  }
+    const time24 = to24h(m[1], m[2], m[3]);
+    const height = parseFloat((heightTxt.match(/([\d.]+)/) || [])[1]);
+    const type = /high/i.test(typeTxt) ? "High" : "Low";
 
-  // Fallback falls Tabelle nicht gefunden
-  if (rows.length < 4) {
-    const allText = $("body").text().replace(/\s+/g, " ");
-    const re = /(Low Tide|High Tide)[^0-9]*?(\d{1,2}):(\d{2})\s*(AM|PM)[^0-9]*?([\d.]+)\s*m/gi;
-    let m;
-    while ((m = re.exec(allText)) && rows.length < 4) {
-      rows.push({
-        type: /high/i.test(m[1]) ? "High" : "Low",
-        timeStr: to24h(m[2], m[3], m[4]),
-        height: parseFloat(m[5]),
-      });
-    }
-  }
+    rows.push({ timeStr: time24, type, height });
+  });
 
-  return rows.slice(0, 4);
+  return rows;
 }
 
-// ---- Hauptfunktion: Daten abrufen und speichern ----
-async function fetchTidesForDay(offset = 0) {
-  const targetDate = new Date();
-  targetDate.setDate(targetDate.getDate() + offset);
+function attachDate(date, timeStr, tz) {
+  const [hh, mm] = timeStr.split(":").map(Number);
+  const d = new Date(date);
+  d.setHours(hh, mm, 0, 0);
+  const iso = new Date(d.toLocaleString("en-US", { timeZone: tz }));
+  return iso.toISOString();
+}
 
+async function generateData(dayOffset = 0) {
   const html = await fetchHtml(BASE_URL);
   const tides = parseTides(html);
 
+  const baseDate = localNow(TIMEZONE);
+  baseDate.setDate(baseDate.getDate() + dayOffset);
+
   const tidesWithIso = tides.map(t => ({
     ...t,
-    iso: toIsoForDay(targetDate, t.timeStr, TIMEZONE)
+    iso: attachDate(baseDate, t.timeStr, TIMEZONE)
   }));
 
   const out = {
-    meta: {
-      location: "Playa del Inglés",
-      lat: LAT,
-      lon: LON,
-      timezone: TIMEZONE,
-      generatedAt: new Date().toISOString(),
-      dayOffset: offset,
-      source: "tide-forecast.com (parsed)",
-    },
+    date: baseDate.toLocaleDateString("de-DE", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: TIMEZONE
+    }),
+    timezone: TIMEZONE,
+    location: "Playa del Inglés",
     tides: tidesWithIso,
+    generatedAt: new Date().toISOString()
   };
 
-  const fileName = `data-${offset}.json`;
-  if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(path.join(OUT_DIR, fileName), JSON.stringify(out, null, 2));
-  console.log(`✅ ${fileName} geschrieben (${tides.length} Einträge)`);
+  const file = path.join(OUTPUT_DIR, `data-${dayOffset}.json`);
+  fs.writeFileSync(file, JSON.stringify(out, null, 2));
+  console.log(`✅ ${file} geschrieben (${tidesWithIso.length} Einträge)`);
 }
 
-// ---- Starte alle drei Tage ----
+// ---- Ausführung ----
 (async () => {
-  for (let i = 0; i <= 2; i++) {
-    await fetchTidesForDay(i);
+  for (let i = 0; i < 3; i++) {
+    await generateData(i);
   }
-  console.log("🎉 Alle 3 Tage erfolgreich abgerufen!");
-})().catch(err => {
-  console.error("❌ Fehler beim Abrufen:", err);
-  process.exit(1);
-});
+})();
