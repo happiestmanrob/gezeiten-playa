@@ -9,8 +9,10 @@ global.File = class {};
 
 
 import fs from "fs";
-import fetch from "node-fetch";
 import * as cheerio from "cheerio";
+
+// Node 18+ hat fetch bereits eingebaut — kein Import nötig!
+
 
 
 // ---- Konfiguration ----
