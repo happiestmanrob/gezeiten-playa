@@ -4,6 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Gezeiten · Playa del Inglés</title>
+
+<h2 id="trend" style="text-align:center; margin-top:0.5em; font-weight:500; color:#333;"></h2>
+
+  
+  
 <style>
 :root{--bg1:#b3c7ff;--bg2:#b8f1d6;--card:rgba(255,255,255,.45);--text:#0e2b2d;--muted:#325d60}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -61,41 +66,67 @@ a.small{font-size:.9rem;text-decoration:underline;color:inherit}
 
 <script>
 const TZ = "Atlantic/Canary";
+
 function tLocal(iso) {
   try {
-    return new Date(iso).toLocaleTimeString("de-DE",{ timeZone: TZ, hour: "2-digit", minute: "2-digit" });
-  } catch { return "–"; }
+    return new Date(iso).toLocaleTimeString("de-DE", {
+      timeZone: TZ,
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch {
+    return "–";
+  }
 }
 
-fetch("latest.json?cb="+Date.now())
-  .then(r=>r.json())
-  .then(j=>{
-    document.getElementById("meta").textContent = `${j.meta.location} · Zeiten in ${j.meta.timezone}`;
+// 📁 Hier jetzt data.json statt latest.json:
+fetch("data.json?cb=" + Date.now())
+  .then(r => r.json())
+  .then(j => {
+    // Titel
+    document.getElementById("meta").textContent =
+      `${j.meta.location} · Zeiten in ${j.meta.timezone}`;
     document.getElementById("dateLabel").textContent =
-      new Date().toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+      new Date().toLocaleDateString("de-DE", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      });
 
+    // 🆕 Trendanzeige (oberhalb der Tabelle)
+    const trendEl = document.getElementById("trend");
+    if (trendEl && j.meta.trend && j.tides?.length > 1) {
+      trendEl.textContent = `${j.meta.trend} (nächstes ${j.tides[1].typ} um ${j.tides[1].zeit} Uhr)`;
+    }
+
+    // Tabelle
     const tb = document.getElementById("tbody");
     tb.innerHTML = "";
-    (j.tides||[]).forEach(e=>{
-      const badge = e.type==="High"
-        ? "<span class='badge high'>Hochwasser</span>"
-        : "<span class='badge low'>Niedrigwasser</span>";
-      const displayTime = e.timeStr || tLocal(e.iso);
-      tb.innerHTML += `<tr><td>${displayTime}</td><td>${badge}</td><td>${(e.height ?? 0).toFixed(2)}</td></tr>`;
+    (j.tides || []).forEach(e => {
+      const badge =
+        e.typ === "Hochwasser"
+          ? "<span class='badge high'>Hochwasser</span>"
+          : "<span class='badge low'>Niedrigwasser</span>";
+      tb.innerHTML += `<tr><td>${e.zeit}</td><td>${badge}</td><td>${e.hoehe.toFixed(2)}</td></tr>`;
     });
 
-    // Astronomie
+    // Sonne & Mond
     if (j.astronomy) {
-      document.getElementById("sunrise").textContent = j.astronomy.sunrise ? tLocal(j.astronomy.sunrise) : "–";
-      document.getElementById("sunset").textContent  = j.astronomy.sunset  ? tLocal(j.astronomy.sunset)  : "–";
-      document.getElementById("moon").textContent    = j.astronomy.moonPhaseName || "–";
+      document.getElementById("sunrise").textContent = j.astronomy.sonnenaufgang || "–";
+      document.getElementById("sunset").textContent = j.astronomy.sonnenuntergang || "–";
+      document.getElementById("moon").textContent = j.astronomy.mondphase || "–";
     }
+
+    // Quelleninfo
     document.getElementById("source").textContent =
-      `Quelle: tide-forecast.com (geparst) · Open-Meteo · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE",{timeZone:TZ})}`;
+      `Quelle: tide-forecast.com (geparst) · Open-Meteo · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
   })
-  .catch(e=>{
-    document.getElementById("tbody").innerHTML = `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
+  .catch(e => {
+    document.getElementById("tbody").innerHTML =
+      `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
   });
 </script>
+
 </body>
 </html>
