@@ -14,28 +14,36 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
 
       - name: Run tide fetch script
-        run: node scripts/fetch.js
+        run: |
+          echo "🌊 Lade aktuelle Gezeiten..."
+          node scripts/fetch.js
+          echo "✅ fetch.js ausgeführt"
 
       - name: Copy frontend to public
         run: |
           mkdir -p public
           cp -r frontend/* public/
-
+          echo "📂 Frontend-Dateien nach public kopiert"
 
       - name: Verify output files
         run: |
-          echo "Inhalt des public-Verzeichnisses:"
-          ls -la public
-          echo "Falls latest.json fehlt, wurde sie nicht erzeugt!"
+          echo "📄 Inhalt des public-Verzeichnisses:"
+          ls -lah public || echo "⚠️ public-Ordner nicht gefunden!"
+          if [ ! -f public/latest.json ]; then
+            echo "❌ FEHLER: latest.json wurde NICHT erzeugt!"
+            exit 1
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
+          publish_branch: gh-pages
+          commit_message: "🚀 Update: Neue Gezeiten-Daten veröffentlicht"
