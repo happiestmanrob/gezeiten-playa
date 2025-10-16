@@ -4,78 +4,77 @@ import path from "path";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 
-const URL =
-  "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
+const URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
 
 async function scrapeTides() {
-  console.log(`🌊 Lade Seite: ${URL}`);
-  const res = await fetch(URL);
-  if (!res.ok) throw new Error(`Fehler beim Abruf: ${res.status}`);
-  const html = await res.text();
+  console.log("🌊 Lade Gezeiten für Playa del Inglés ...");
+  console.log("🔗 URL:", URL);
 
+  const res = await fetch(URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status} beim Laden der Seite.`);
+  const html = await res.text();
   const $ = cheerio.load(html);
 
-  // Tabellenzeilen mit Zeiten, Typen, Höhen
-  const rows = $("table.tide-table tbody tr");
-  if (!rows.length) throw new Error("Keine Gezeiten-Tabelle gefunden!");
+  const days = [];
 
-  let tides = [];
-  let currentDate = null;
+  // Finde ALLE h3-Überschriften mit Tagesinfos
+  $("h3").each((_, el) => {
+    const title = $(el).text().trim();
+    if (!title.match(/Playa del Ingles/i)) return;
 
-  rows.each((_, el) => {
-    const dateCell = $(el).find("th").text().trim();
-    const timeCell = $(el).find("td.time").text().trim();
-    const typeCell = $(el).find("td.event").text().trim();
-    const heightCell = $(el).find("td.height").text().trim();
+    // Versuche, das Datum aus dem Text zu extrahieren
+    const dateMatch = title.match(/([A-Za-z]+day) (\d{1,2}) ([A-Za-z]+) (\d{4})/);
+    if (!dateMatch) return;
 
-    // Neue Tageszeile erkannt (z. B. “Thursday 17 October”)
-    if (dateCell && !timeCell) {
-      const parsed = parseDate(dateCell);
-      currentDate = parsed;
-      return;
-    }
+    const [, , day, month, year] = dateMatch;
+    const dateStr = `${day} ${month} ${year}`;
+    const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
 
-    // Nur Zeilen mit Uhrzeit etc.
-    if (!timeCell || !typeCell || !heightCell || !currentDate) return;
+    // Tabelle direkt nach der Überschrift suchen
+    const table = $(el).next("table");
+    if (!table.length) return;
 
-    const zeit = timeCell.replace(/\s+/g, "");
-    const typ = typeCell.includes("High") ? "Hochwasser" : "Niedrigwasser";
+    const tides = [];
 
-    // Höhe (ft → m)
-    const heightFt = parseFloat(heightCell.replace(/[^\d.]/g, ""));
-    const hoehe_m = +(heightFt * 0.3048).toFixed(2);
+    table.find("tr").each((_, row) => {
+      const cols = $(row).find("td");
+      if (cols.length < 3) return;
 
-    tides.push({
-      date: currentDate,
-      zeit,
-      typ,
-      hoehe_m
+      const typeText = $(cols[0]).text().trim();
+      const timeText = $(cols[1]).text().trim().split(/\s+/)[0];
+      const heightText = $(cols[2]).text().trim();
+
+      if (!typeText || !timeText || !heightText) return;
+
+      const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
+      const meterMatch = heightText.match(/([\d.]+)\s*m/);
+      const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
+
+      if (!hoehe_m) return;
+
+      tides.push({
+        zeit: timeText.replace(/^0/, ""), // z.B. "04:27" statt "04:27 AM"
+        typ,
+        hoehe_m,
+      });
     });
+
+    if (tides.length) {
+      days.push({ date: dateISO, tides });
+    }
   });
 
-  // Nach Datum gruppieren
-  const grouped = {};
-  for (const t of tides) {
-    if (!grouped[t.date]) grouped[t.date] = [];
-    grouped[t.date].push({
-      zeit: t.zeit,
-      typ: t.typ,
-      hoehe_m: t.hoehe_m
-    });
+  if (!days.length) {
+    throw new Error("❌ Keine Gezeiten-Tabelle gefunden!");
   }
-
-  const days = Object.entries(grouped).map(([date, tides]) => ({
-    date,
-    tides
-  }));
 
   const result = {
     meta: {
       location: "Playa del Inglés",
       timezone: "Atlantic/Canary",
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
     },
-    days
+    days,
   };
 
   const outputDir = path.resolve("public");
@@ -84,35 +83,10 @@ async function scrapeTides() {
   const outputFile = path.join(outputDir, "latest.json");
   fs.writeFileSync(outputFile, JSON.stringify(result, null, 2), "utf8");
 
-  console.log(`✅ ./public/latest.json geschrieben mit ${days.length} Tagen`);
-}
-
-// Hilfsfunktion für Datumsformat von tide-forecast
-function parseDate(dateStr) {
-  // Beispiel: “Thursday 17 October”
-  const months = {
-    January: "01",
-    February: "02",
-    March: "03",
-    April: "04",
-    May: "05",
-    June: "06",
-    July: "07",
-    August: "08",
-    September: "09",
-    October: "10",
-    November: "11",
-    December: "12"
-  };
-
-  const parts = dateStr.split(/\s+/);
-  const day = parts.find((p) => /^\d+$/.test(p));
-  const month = months[parts.find((p) => months[p])];
-  const year = new Date().getFullYear();
-  return `${year}-${month}-${day.padStart(2, "0")}`;
+  console.log(`✅ Erfolgreich geschrieben: ${outputFile} (${days.length} Tage)`);
 }
 
 scrapeTides().catch((err) => {
-  console.error("❌ Fehler:", err.message);
+  console.error("🚨 Fehler:", err.message);
   process.exit(1);
 });
