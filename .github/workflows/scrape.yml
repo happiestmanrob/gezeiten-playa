@@ -23,7 +23,7 @@ jobs:
           node-version: 18
 
       - name: Install deps
-        run: npm ci
+        run: npm install
 
       - name: Run scraper
         run: npm run fetch
