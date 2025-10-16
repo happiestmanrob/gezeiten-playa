@@ -121,13 +121,12 @@ function parseTides(html) {
     tides,
   };
 
-  const outDir = path.join(process.cwd(), "public");
+  const outDir = path.join(process.cwd(), "frontend");
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(outDir, "latest.json"),
-    JSON.stringify(out, null, 2)
-  );
-  console.log("✅ Wrote public/latest.json with", tides.length, "entries");
+  const outPath = path.join(outDir, "data.json");
+  fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
+  console.log("✅ Wrote frontend/data.json with", tides.length, "entries");
+
 })().catch((err) => {
   console.error("❌ Fetch failed:", err);
   process.exit(1);
