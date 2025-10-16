@@ -1,213 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gezeiten · Playa del Inglés</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: linear-gradient(135deg, #e6f3ff, #d9f9ec);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      margin: 0;
-      padding: 2rem;
-      color: #222;
+    :root{
+      --bg-a:#e8f1ff; --bg-b:#e7f6ee;
+      --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --hi:#d1fae5; --hi-t:#065f46; --lo:#fee2e2; --lo-t:#991b1b;
+      --row:#f8fafc; --shadow:0 10px 35px rgba(15,23,42,.12);
+      --green:#059669; --red:#dc2626;
+      --accent:#2563eb;
     }
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-      padding: 2rem;
-      max-width: 600px;
-      width: 100%;
-      text-align: center;
-      animation: fadeIn 0.5s ease;
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 15% 20%,var(--bg-a),transparent),
+                  radial-gradient(1200px 800px at 85% 80%,var(--bg-b),transparent),
+                  #f3f8ff;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .wrap{
+      max-width:980px; margin:48px auto; padding:16px;
     }
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 0.3rem;
+    .card{
+      background:var(--card); border-radius:24px; box-shadow:var(--shadow);
+      padding:32px 24px; margin:auto; max-width:860px;
     }
-    h2 {
-      font-size: 1rem;
-      font-weight: 500;
-      color: #555;
-      margin-top: 0;
-      margin-bottom: 1.5rem;
+    h1{
+      display:flex; align-items:center; gap:12px; margin:0 0 6px 0;
+      font-size:clamp(24px,3.8vw,34px);
     }
-    .trend {
-      font-size: 1rem;
-      margin-bottom: 1.2rem;
-      line-height: 1.4em;
-      font-weight: 500;
+    .sub{color:var(--muted); margin:0 0 10px 44px}
+    .date{ text-align:center; font-weight:700; margin:10px 0 6px; }
+    .trend{
+      text-align:center; margin:8px 0 18px;
+      line-height:1.35;
     }
-    .trend.up { color: #0a892e; }
-    .trend.down { color: #d01919; }
-
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      margin-bottom: 1.2rem;
-      flex-wrap: wrap;
+    .trend .state{ font-weight:700; }
+    .trend .rising{ color:var(--green); }
+    .trend .falling{ color:var(--red); }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ padding:14px 16px; text-align:left; }
+    thead th{ color:var(--muted); font-weight:600; font-size:15px; }
+    tbody tr{ background:#fff; }
+    tbody tr:nth-child(2n){ background:var(--row); }
+    .badge{
+      padding:4px 10px; border-radius:999px; font-weight:600; font-size:13px; display:inline-block;
     }
-    button {
-      background: #f2f2f2;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 0.4rem 0.9rem;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: all 0.2s;
-    }
-    button:hover {
-      background: #e6f5ff;
-      border-color: #0078d4;
-    }
-    button.active {
-      background: #0078d4;
-      color: white;
-      border-color: #0078d4;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.8rem;
-    }
-    th, td {
-      padding: 0.6rem 0.4rem;
-      border-bottom: 1px solid #eee;
-      text-align: center;
-    }
-    th {
-      font-weight: 600;
-      color: #444;
-    }
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.6rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-    .high { background: #d9f9ec; color: #066b33; }
-    .low { background: #ffe6e6; color: #b11b1b; }
-
-    footer {
-      margin-top: 1.2rem;
-      font-size: 0.8rem;
-      color: #666;
-    }
-    @media (max-width: 600px) {
-      .card { padding: 1.2rem; }
-      h1 { font-size: 1.5rem; }
-      .trend { font-size: 0.9rem; }
+    .high{ background:var(--hi); color:var(--hi-t); }
+    .low{  background:var(--lo); color:var(--lo-t); }
+    .source{ color:var(--muted); font-size:13px; text-align:center; margin-top:14px; }
+    @media (max-width:640px){
+      .card{ padding:20px 14px; border-radius:18px;}
+      th,td{ padding:12px 10px; }
+      .sub{ margin-left:0; text-align:center; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🌊 Gezeiten · Playa del Inglés</h1>
-    <h2 id="dateLabel">–</h2>
-    <div id="trend" class="trend">–</div>
+  <div class="wrap">
+    <div class="card">
+      <h1>🌊 Gezeiten · Playa del Inglés</h1>
+      <p class="sub" id="tz"></p>
+      <div class="date" id="date"></div>
+      <div class="trend" id="trend"></div>
 
-    <div class="buttons">
-      <button id="btn0" class="active">Heute</button>
-      <button id="btn1">Morgen</button>
-      <button id="btn2">Übermorgen</button>
+      <table>
+        <thead>
+          <tr><th style="width:22%">Zeit</th><th style="width:44%">Typ</th><th>Höhe (m)</th></tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="3" style="padding:22px">Lade Daten…</td></tr>
+        </tbody>
+      </table>
+
+      <p class="source" id="source"></p>
     </div>
-
-    <table>
-      <thead>
-        <tr><th>Zeit</th><th>Typ</th><th>Höhe (m)</th></tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="3">Lade Daten...</td></tr>
-      </tbody>
-    </table>
-
-    <footer id="source"></footer>
   </div>
 
-  <script>
-    const TZ = "Atlantic/Canary";
+<script>
+const TZ = "Atlantic/Canary";
+const fmtTime = isoOrHm => {
+  if (!isoOrHm) return "–";
+  if (/^\d{2}:\d{2}$/.test(isoOrHm)) return isoOrHm;
+  try{
+    return new Date(isoOrHm).toLocaleTimeString("de-DE",{ timeZone: TZ, hour:"2-digit", minute:"2-digit" });
+  }catch{ return "–"; }
+};
 
-    function formatTime(iso) {
-      try {
-        return new Date(iso).toLocaleTimeString("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
-      } catch { return "–"; }
-    }
+(async function init(){
+  const res = await fetch("latest.json?cb="+Date.now());
+  if(!res.ok){ document.getElementById("tbody").innerHTML = `<tr><td colspan="3">Fehler beim Laden</td></tr>`; return; }
+  const j = await res.json();
 
-    function updateTable(data) {
-      const tb = document.getElementById("tbody");
-      tb.innerHTML = "";
-      (data.tides || []).forEach(t => {
-        const badge = t.type === "High"
-          ? "<span class='badge high'>Hochwasser</span>"
-          : "<span class='badge low'>Niedrigwasser</span>";
-        tb.innerHTML += `<tr>
-          <td>${t.timeStr}</td>
-          <td>${badge}</td>
-          <td>${t.height?.toFixed(2) ?? "–"}</td>
-        </tr>`;
-      });
+  // Kopf
+  document.getElementById("tz").textContent = `Zeiten in ${j.timezone}`;
+  document.getElementById("date").textContent = j.dateDe || "";
 
-      // Trend ermitteln
-const nowDate = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+  // Trend (2 Zeilen, farblich)
+  const trendEl = document.getElementById("trend");
+  if (j.trend && j.trend.state) {
+    const rising = j.trend.state === "rising";
+    const stateHtml = rising ? `<span class="state rising">Das Wasser steigt</span>` :
+                               `<span class="state falling">Das Wasser fällt</span>`;
+    const nextTxt = j.trend.next
+      ? (j.trend.next.type === "High"
+          ? `nächstes Hochwasser um ${fmtTime(j.trend.next.timeStr)}`
+          : `nächstes Niedrigwasser um ${fmtTime(j.trend.next.timeStr)}`)
+      : "Zeitpunkt folgt";
+    trendEl.innerHTML = `${stateHtml}<br><span>${nextTxt}</span>`;
+  } else {
+    trendEl.textContent = "Trend nicht verfügbar";
+  }
 
-      const upcoming = data.tides.find(t => new Date(t.iso) > nowDate);
-      let trendText = "–", trendClass = "";
-      if (upcoming) {
-        if (upcoming.type === "High") {
-          trendText = `Das Wasser steigt\n(nächstes Hochwasser um ${upcoming.timeStr} Uhr)`;
-          trendClass = "up";
-        } else {
-          trendText = `Das Wasser fällt\n(nächstes Niedrigwasser um ${upcoming.timeStr} Uhr)`;
-          trendClass = "down";
-        }
-      } else {
-        trendText = "Keine weiteren Gezeiten heute.";
-        trendClass = "";
-      }
+  // Tabelle
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = "";
+  (j.tides||[]).forEach(e=>{
+    const badge = e.type==="High"
+      ? `<span class="badge high">Hochwasser</span>`
+      : `<span class="badge low">Niedrigwasser</span>`;
+    tb.innerHTML += `<tr>
+      <td>${e.timeStr ? e.timeStr : fmtTime(e.iso)}</td>
+      <td>${badge}</td>
+      <td>${(e.height ?? 0).toFixed(2)}</td>
+    </tr>`;
+  });
 
-      const trendEl = document.getElementById("trend");
-      trendEl.textContent = "";
-      trendEl.innerText = trendText;
-      trendEl.className = "trend " + trendClass;
-
-      document.getElementById("dateLabel").textContent = data.date;
-      document.getElementById("source").textContent =
-        `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(data.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
-    }
-
-    async function loadDay(day = 0) {
-      document.querySelectorAll(".buttons button").forEach(b => b.classList.remove("active"));
-      document.getElementById(`btn${day}`).classList.add("active");
-
-      const tb = document.getElementById("tbody");
-      tb.innerHTML = `<tr><td colspan="3">Lade Daten...</td></tr>`;
-
-      try {
-        const r = await fetch(`data-${day}.json?cb=${Date.now()}`);
-        const j = await r.json();
-        updateTable(j);
-      } catch (e) {
-        tb.innerHTML = `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
-      }
-    }
-
-    document.getElementById("btn0").onclick = () => loadDay(0);
-    document.getElementById("btn1").onclick = () => loadDay(1);
-    document.getElementById("btn2").onclick = () => loadDay(2);
-
-    loadDay(0);
-  </script>
+  document.getElementById("source").textContent =
+    `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(j.generatedAt).toLocaleString("de-DE",{ timeZone: TZ })}`;
+})();
+</script>
 </body>
 </html>
