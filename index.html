@@ -4,130 +4,107 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gezeiten · Playa del Inglés</title>
-  <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f30a.svg" />
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: linear-gradient(180deg, #e6f7ff, #f7fbfc);
+      background: linear-gradient(to bottom right, #dff3ff, #e8f7ff);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
       margin: 0;
-      padding: 0;
+      padding: 2rem;
     }
     .card {
-      max-width: 700px;
-      margin: 3rem auto;
-      background: #fff;
-      padding: 2rem;
+      background: white;
       border-radius: 1.5rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
       text-align: center;
     }
     h1 {
-      font-size: 2rem;
-      margin: 0.5rem 0;
+      display: inline;
+      font-size: 1.9rem;
+      font-weight: 700;
     }
-    h2 {
+    .subtitle {
       font-size: 1.1rem;
-      font-weight: normal;
-      color: #444;
-      margin-top: 0;
+      margin-top: 0.3rem;
+      color: #333;
+    }
+    .status {
+      margin: 1rem 0;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    .buttons {
+      margin-bottom: 1rem;
+    }
+    button {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 0.4rem 1rem;
+      margin: 0 0.2rem;
+      cursor: pointer;
+    }
+    button.active {
+      background: #007bff;
+      color: white;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1.5rem;
+      margin-top: 1rem;
     }
     th, td {
       padding: 0.6rem;
       border-bottom: 1px solid #eee;
     }
     th {
-      color: #666;
+      text-align: left;
+      color: #444;
+    }
+    .hoch {
+      color: #007b00;
       font-weight: 600;
     }
-    .low {
-      background: #ffe6e6;
-      color: #c00;
-      border-radius: 0.5rem;
-      padding: 0.2rem 0.5rem;
-    }
-    .high {
-      background: #e6f7e6;
-      color: #070;
-      border-radius: 0.5rem;
-      padding: 0.2rem 0.5rem;
-    }
-    .trend {
+    .niedrig {
+      color: #cc0000;
       font-weight: 600;
-      margin: 1rem 0;
     }
     footer {
       margin-top: 1rem;
+      font-size: 0.85rem;
       color: #777;
-      font-size: 0.9rem;
     }
-    button {
-      background: #f5f5f5;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-      padding: 0.4rem 1rem;
-      margin: 0.2rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #e9f6ff;
-    }
-
-    /* --- MOBILE ANSICHT --- */
-    @media (max-width: 768px) {
-      .card {
-        margin: 1.5rem;
-        padding: 1.5rem;
-      }
+    @media (max-width: 600px) {
       h1 {
-        font-size: 1.3rem;
-        margin-bottom: 0.2rem;
-      }
-      .headline-desktop {
-        display: none;
-      }
-      .headline-mobile {
         display: block;
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #222;
-        margin-bottom: 0.2rem;
+        font-size: 1.4rem;
+      }
+      .subtitle {
+        font-size: 1rem;
       }
       footer {
         font-size: 0.75rem;
-        line-height: 1.4;
-      }
-    }
-
-    @media (min-width: 769px) {
-      .headline-mobile {
-        display: none;
-      }
-      .headline-desktop {
-        display: inline;
+        line-height: 1.2;
       }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div id="headline">
-      <span class="headline-mobile">Gezeiten</span>
-      <h1 class="headline-desktop">🌊 Gezeiten · Playa del Inglés</h1>
-      <h1 class="headline-mobile">🌊 Playa del Inglés</h1>
-    </div>
+    <h1>🌊 Gezeiten · Playa del Inglés</h1>
+    <div id="date" class="subtitle"></div>
+    <div id="status" class="status"></div>
 
-    <h2 id="datum"></h2>
-    <div class="trend" id="trend">Lade Daten...</div>
-
-    <div>
-      <button onclick="zeigeTag(0)">Heute</button>
-      <button onclick="zeigeTag(1)">Morgen</button>
-      <button onclick="zeigeTag(2)">Übermorgen</button>
+    <div class="buttons">
+      <button id="btn-today" class="active">Heute</button>
+      <button id="btn-tomorrow">Morgen</button>
+      <button id="btn-next">Übermorgen</button>
     </div>
 
     <table>
@@ -138,101 +115,99 @@
           <th>Höhe (m)</th>
         </tr>
       </thead>
-      <tbody id="tabelle"></tbody>
+      <tbody id="tides"></tbody>
     </table>
 
     <footer id="footer"></footer>
   </div>
 
   <script>
-    let alleDaten = {};
-    let tagIndex = 0;
+    const buttons = {
+      today: document.getElementById('btn-today'),
+      tomorrow: document.getElementById('btn-tomorrow'),
+      next: document.getElementById('btn-next'),
+    };
+    const tidesEl = document.getElementById('tides');
+    const dateEl = document.getElementById('date');
+    const statusEl = document.getElementById('status');
+    const footerEl = document.getElementById('footer');
 
-    async function ladeDaten() {
-      try {
-        const res = await fetch("latest.json?_=" + Date.now());
-        const daten = await res.json();
+    let data = null;
 
-        // Simulation: wir nehmen die nächsten 3 Tage an, hier nur denselben Tag mehrfach
-        alleDaten = [daten, daten, daten]; 
-        aktualisiereAnsicht();
-      } catch (err) {
-        document.getElementById("trend").textContent = "❌ Fehler beim Laden der Daten!";
-        console.error(err);
-      }
+    async function loadData() {
+      const url = `latest.json?nocache=${Date.now()}`; // Cache umgehen
+      const res = await fetch(url);
+      data = await res.json();
+      updateView(0);
     }
 
-    function aktualisiereAnsicht() {
-      const meta = alleDaten[tagIndex].meta;
-      const tides = alleDaten[tagIndex].tides;
-      const jetzt = new Date();
-      const datumStr = jetzt.toLocaleDateString("de-DE", {
-        weekday: "long", day: "numeric", month: "long", year: "numeric"
-      });
-      document.getElementById("datum").textContent = datumStr;
+    function updateView(offset) {
+      const today = new Date();
+      const date = new Date(today);
+      date.setDate(today.getDate() + offset);
 
-      // Tabelle füllen
-      const tabelle = document.getElementById("tabelle");
-      tabelle.innerHTML = "";
-      tides.forEach(eintrag => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${eintrag.zeit}</td>
-          <td><span class="${eintrag.typ === "Hochwasser" ? "high" : "low"}">${eintrag.typ}</span></td>
-          <td>${eintrag.hoehe_m.toFixed(2)}</td>
-        `;
-        tabelle.appendChild(tr);
-      });
+      const dayISO = date.toISOString().split("T")[0];
+      const entry = data.days.find(d => d.date === dayISO);
 
-      // Trend
-      const naechstes = findeNaechstesEreignis(tides);
-      const trendEl = document.getElementById("trend");
-      if (naechstes.typ === "Hochwasser") {
-        trendEl.style.color = "green";
-        trendEl.innerHTML = `Das Wasser steigt<br>(nächstes Hochwasser um ${naechstes.zeit})`;
-      } else {
-        trendEl.style.color = "red";
-        trendEl.innerHTML = `Das Wasser fällt<br>(nächstes Niedrigwasser um ${naechstes.zeit})`;
+      if (!entry) {
+        tidesEl.innerHTML = `<tr><td colspan="3">Keine Daten für diesen Tag</td></tr>`;
+        return;
       }
 
-      // Footer
-      const time = new Date(meta.generatedAt);
-      const formatted = time.toLocaleString("de-DE", {
-        timeZone: "Atlantic/Canary",
+      const tides = entry.tides;
+      tidesEl.innerHTML = tides.map(t => `
+        <tr>
+          <td>${t.zeit}</td>
+          <td class="${t.typ === "Hochwasser" ? "hoch" : "niedrig"}">${t.typ}</td>
+          <td>${t.hoehe_m.toFixed(2)}</td>
+        </tr>
+      `).join("");
+
+      const dateFmt = date.toLocaleDateString("de-DE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+      dateEl.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
+
+      const now = new Date();
+      const [next, nextType] = getNextTide(tides, now);
+      const trend = nextType === "Hochwasser" ? "Das Wasser steigt 🌊" : "Das Wasser fällt ⬇️";
+      const color = nextType === "Hochwasser" ? "#007b00" : "#cc0000";
+      statusEl.innerHTML = `<span style="color:${color}">${trend}<br>(nächstes ${nextType} um ${next})</span>`;
+
+      const gen = new Date(data.meta.generatedAt);
+      const genFmt = gen.toLocaleString("de-DE", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-        hour12: false
+        timeZone: "Atlantic/Canary",
       });
-      document.getElementById("footer").innerHTML =
-        `Quelle: tide-forecast.com (geparst) · Aktualisiert: ${formatted.replace(",", "")} WET`;
+      footerEl.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${genFmt} WET`;
+
+      Object.values(buttons).forEach(b => b.classList.remove("active"));
+      [buttons.today, buttons.tomorrow, buttons.next][offset].classList.add("active");
     }
 
-    // Findet das nächste Gezeitenereignis, auch über Mitternacht hinaus
-    function findeNaechstesEreignis(tides) {
-      const jetzt = new Date();
-      const heute = jetzt.toISOString().split("T")[0];
-
-      let ereignisse = [];
-      tides.forEach(eintrag => {
-        const [h, m] = eintrag.zeit.split(":").map(Number);
-        const t = new Date(`${heute}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
-        ereignisse.push({ ...eintrag, zeitpunkt: t });
-      });
-
-      // Falls alle Ereignisse vorbei sind -> erstes Ereignis von "morgen"
-      const zukunft = ereignisse.find(e => e.zeitpunkt > jetzt);
-      return zukunft || { ...ereignisse[0], zeitpunkt: new Date(jetzt.getTime() + 86400000) };
+    function getNextTide(tides, now) {
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      for (const t of tides) {
+        const [h, m] = t.zeit.split(":").map(Number);
+        const mins = h * 60 + m;
+        if (mins > nowMinutes) return [t.zeit, t.typ];
+      }
+      return [tides[0].zeit, tides[0].typ];
     }
 
-    function zeigeTag(index) {
-      tagIndex = index;
-      aktualisiereAnsicht();
-    }
+    buttons.today.onclick = () => updateView(0);
+    buttons.tomorrow.onclick = () => updateView(1);
+    buttons.next.onclick = () => updateView(2);
 
-    ladeDaten();
+    loadData();
   </script>
 </body>
 </html>
