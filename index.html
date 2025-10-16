@@ -1,241 +1,213 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gezeiten · Playa del Inglés</title>
   <style>
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: linear-gradient(to bottom right, #dff0ff, #e8fff2);
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #e6f3ff, #d9f9ec);
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
       margin: 0;
-      padding: 2em;
+      padding: 2rem;
+      color: #222;
     }
     .card {
       background: white;
-      border-radius: 1.5em;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      padding: 2em 2.5em;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      padding: 2rem;
       max-width: 600px;
       width: 100%;
       text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     h1 {
-      font-size: 1.8em;
-      margin-bottom: 0.2em;
+      font-size: 1.8rem;
+      margin-bottom: 0.3rem;
     }
-    #dateLabel {
-      font-weight: 600;
-      font-size: 1.2em;
-      margin-top: 0.3em;
+    h2 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #555;
+      margin-top: 0;
+      margin-bottom: 1.5rem;
     }
-    #trend {
-      font-size: 1.1em;
+    .trend {
+      font-size: 1rem;
+      margin-bottom: 1.2rem;
       line-height: 1.4em;
-      margin-top: 0.6em;
       font-weight: 500;
     }
-    .trend-rise {
-      color: #1a7a3f;
+    .trend.up { color: #0a892e; }
+    .trend.down { color: #d01919; }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
     }
-    .trend-fall {
-      color: #b22c2c;
+    button {
+      background: #f2f2f2;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s;
     }
+    button:hover {
+      background: #e6f5ff;
+      border-color: #0078d4;
+    }
+    button.active {
+      background: #0078d4;
+      color: white;
+      border-color: #0078d4;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1.4em;
+      margin-top: 0.8rem;
     }
     th, td {
-      padding: 0.6em;
-      text-align: center;
+      padding: 0.6rem 0.4rem;
       border-bottom: 1px solid #eee;
+      text-align: center;
     }
     th {
-      color: #444;
       font-weight: 600;
+      color: #444;
     }
     .badge {
       display: inline-block;
-      padding: 0.2em 0.6em;
-      border-radius: 0.6em;
-      font-size: 0.9em;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
-    .high {
-      background: #e6f8ec;
-      color: #267a3f;
-    }
-    .low {
-      background: #fdeaea;
-      color: #a63838;
-    }
-    #source {
-      margin-top: 1.2em;
-      font-size: 0.85em;
+    .high { background: #d9f9ec; color: #066b33; }
+    .low { background: #ffe6e6; color: #b11b1b; }
+
+    footer {
+      margin-top: 1.2rem;
+      font-size: 0.8rem;
       color: #666;
     }
-    #dayButtons {
-      margin-top: 1em;
-    }
-    #dayButtons button {
-      background: #f0f4f8;
-      border: 1px solid #ccc;
-      border-radius: 0.5em;
-      padding: 0.4em 0.9em;
-      margin: 0 0.3em;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    #dayButtons button:hover {
-      background: #dcefff;
-      border-color: #7ab8ff;
-    }
-
-    /* Responsive Styling */
     @media (max-width: 600px) {
-      .card {
-        padding: 1.5em;
-      }
-      h1 {
-        font-size: 1.5em;
-      }
-      #trend {
-        font-size: 1em;
-      }
-      table th, table td {
-        padding: 0.4em;
-      }
+      .card { padding: 1.2rem; }
+      h1 { font-size: 1.5rem; }
+      .trend { font-size: 0.9rem; }
     }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>🌊 Gezeiten · Playa del Inglés</h1>
-    <p id="dateLabel">–</p>
-    <p id="trend">–</p>
+    <h2 id="dateLabel">–</h2>
+    <div id="trend" class="trend">–</div>
 
-    <div id="dayButtons">
-      <button onclick="loadDay(0)">Heute</button>
-      <button onclick="loadDay(1)">Morgen</button>
-      <button onclick="loadDay(2)">Übermorgen</button>
+    <div class="buttons">
+      <button id="btn0" class="active">Heute</button>
+      <button id="btn1">Morgen</button>
+      <button id="btn2">Übermorgen</button>
     </div>
 
     <table>
       <thead>
-        <tr>
-          <th>Zeit</th>
-          <th>Typ</th>
-          <th>Höhe (m)</th>
-        </tr>
+        <tr><th>Zeit</th><th>Typ</th><th>Höhe (m)</th></tr>
       </thead>
       <tbody id="tbody">
         <tr><td colspan="3">Lade Daten...</td></tr>
       </tbody>
     </table>
 
-    <p id="source"></p>
+    <footer id="source"></footer>
   </div>
 
   <script>
     const TZ = "Atlantic/Canary";
 
-    function tLocal(iso) {
+    function formatTime(iso) {
       try {
-        return new Date(iso).toLocaleTimeString("de-DE", { 
-          timeZone: TZ, 
-          hour: "2-digit", 
-          minute: "2-digit" 
-        });
-      } catch { 
-        return "–"; 
-      }
+        return new Date(iso).toLocaleTimeString("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+      } catch { return "–"; }
     }
 
-    function tDate(iso) {
-      return new Date(iso).toLocaleDateString("de-DE", {
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        timeZone: TZ
-      });
-    }
-
-    function renderDay(j) {
-      const dateEl = document.getElementById("dateLabel");
-      const trendEl = document.getElementById("trend");
+    function updateTable(data) {
       const tb = document.getElementById("tbody");
-
-      dateEl.textContent = tDate(j.meta.generatedAt);
       tb.innerHTML = "";
-
-      (j.tides || []).forEach(e => {
-        const badge = e.type === "High"
+      (data.tides || []).forEach(t => {
+        const badge = t.type === "High"
           ? "<span class='badge high'>Hochwasser</span>"
           : "<span class='badge low'>Niedrigwasser</span>";
-        tb.innerHTML += `
-          <tr>
-            <td>${e.timeStr}</td>
-            <td>${badge}</td>
-            <td>${(e.height ?? 0).toFixed(2)}</td>
-          </tr>`;
+        tb.innerHTML += `<tr>
+          <td>${t.timeStr}</td>
+          <td>${badge}</td>
+          <td>${t.height?.toFixed(2) ?? "–"}</td>
+        </tr>`;
       });
 
-      // --- Trend korrekt bestimmen ---
-      const nowCanary = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
-      const futureTides = j.tides.filter(t => new Date(t.iso) > nowCanary);
-      const pastTides = j.tides.filter(t => new Date(t.iso) <= nowCanary);
-
-      const next = futureTides.length ? futureTides[0] : null;
-      const prev = pastTides.length ? pastTides[pastTides.length - 1] : null;
-
-      let trendTxt = "–";
-      let trendClass = "";
-
-      if (next && prev) {
-        const diffMin = (nowCanary - new Date(prev.iso)) / 60000;
-        const rising = next.type === "High";
-        const falling = next.type === "Low";
-
-        if (rising && diffMin >= 0) {
-          trendTxt = `Das Wasser steigt<br><span style="font-size:0.95em;">(nächstes Hochwasser um ${next.timeStr} Uhr)</span>`;
-          trendClass = "trend-rise";
-        } else if (falling && diffMin >= 0) {
-          trendTxt = `Das Wasser fällt<br><span style="font-size:0.95em;">(nächstes Niedrigwasser um ${next.timeStr} Uhr)</span>`;
-          trendClass = "trend-fall";
-        }
-      } else if (next) {
-        if (next.type === "High") {
-          trendTxt = `Das Wasser steigt<br><span style="font-size:0.95em;">(nächstes Hochwasser um ${next.timeStr} Uhr)</span>`;
-          trendClass = "trend-rise";
+      // Trend ermitteln
+      const now = new Date().toLocaleString("en-US", { timeZone: TZ });
+      const nowDate = new Date(now);
+      const upcoming = data.tides.find(t => new Date(t.iso) > nowDate);
+      let trendText = "–", trendClass = "";
+      if (upcoming) {
+        if (upcoming.type === "High") {
+          trendText = `Das Wasser steigt\n(nächstes Hochwasser um ${upcoming.timeStr} Uhr)`;
+          trendClass = "up";
         } else {
-          trendTxt = `Das Wasser fällt<br><span style="font-size:0.95em;">(nächstes Niedrigwasser um ${next.timeStr} Uhr)</span>`;
-          trendClass = "trend-fall";
+          trendText = `Das Wasser fällt\n(nächstes Niedrigwasser um ${upcoming.timeStr} Uhr)`;
+          trendClass = "down";
         }
+      } else {
+        trendText = "Keine weiteren Gezeiten heute.";
+        trendClass = "";
       }
 
-      trendEl.innerHTML = trendTxt;
-      trendEl.className = trendClass;
+      const trendEl = document.getElementById("trend");
+      trendEl.textContent = "";
+      trendEl.innerText = trendText;
+      trendEl.className = "trend " + trendClass;
 
+      document.getElementById("dateLabel").textContent = data.date;
       document.getElementById("source").textContent =
-        `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
+        `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(data.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
     }
 
-    async function loadDay(offset = 0) {
+    async function loadDay(day = 0) {
+      document.querySelectorAll(".buttons button").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn${day}`).classList.add("active");
+
+      const tb = document.getElementById("tbody");
+      tb.innerHTML = `<tr><td colspan="3">Lade Daten...</td></tr>`;
+
       try {
-        const res = await fetch(`data-${offset}.json?cb=${Date.now()}`);
-        const j = await res.json();
-        renderDay(j);
+        const r = await fetch(`data-${day}.json?cb=${Date.now()}`);
+        const j = await r.json();
+        updateTable(j);
       } catch (e) {
-        document.getElementById("tbody").innerHTML = `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="3">Fehler: ${e.message}</td></tr>`;
       }
     }
 
-    loadDay();
+    document.getElementById("btn0").onclick = () => loadDay(0);
+    document.getElementById("btn1").onclick = () => loadDay(1);
+    document.getElementById("btn2").onclick = () => loadDay(2);
+
+    loadDay(0);
   </script>
 </body>
 </html>
