@@ -52,103 +52,111 @@
     <section class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <div>
-          <h1>Gezeiten · Playa del Inglés</h1>
-          <div class="meta" id="meta">Playa del Inglés · Zeiten in Atlantic/Canary</div>
-        </div>
-        <a class="jsonlink" href="latest.json" target="_blank">📄 JSON</a>
-      </div>
+          <h1>🌊 Gezeiten · Playa del Inglés</h1>
+<p id="dateLabel" style="font-weight: 600;"></p>
+<p id="trend" style="margin-top: 0.3em; font-size: 1.1em;"></p>
 
-      <div class="date" id="dateLabel">–</div>
-      <div class="trend" id="trend"> </div>
+<table>
+  <thead>
+    <tr>
+      <th>Zeit</th>
+      <th>Typ</th>
+      <th>Höhe (m)</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
 
-      <table>
-        <thead>
-          <tr>
-            <th style="width:22%">Zeit</th>
-            <th style="width:28%">Typ</th>
-            <th style="width:20%">Höhe (m)</th>
-            <th style="width:auto"></th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="4" style="text-align:center;color:#64748b;">Lade Daten…</td></tr>
-        </tbody>
-      </table>
+<p id="source" style="margin-top: 1em; font-size: 0.85em; color: #666;"></p>
 
       <div class="src" id="source"> </div>
     </section>
   </main>
 
-  <script>
-    const TZ = "Atlantic/Canary";
+ <script>
+const TZ = "Atlantic/Canary";
 
-    function tLocal(iso) {
-      try {
-        return new Date(iso).toLocaleTimeString("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
-      } catch { return "–"; }
+function tLocal(iso) {
+  try {
+    return new Date(iso).toLocaleTimeString("de-DE", { 
+      timeZone: TZ, 
+      hour: "2-digit", 
+      minute: "2-digit" 
+    });
+  } catch { 
+    return "–"; 
+  }
+}
+
+function tDate(iso) {
+  return new Date(iso).toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: TZ
+  });
+}
+
+function renderDay(j) {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: TZ });
+  const dateEl = document.getElementById("dateLabel");
+  const trendEl = document.getElementById("trend");
+  const tb = document.getElementById("tbody");
+
+  dateEl.textContent = tDate(j.meta.generatedAt);
+  tb.innerHTML = "";
+
+  (j.tides || []).forEach(e => {
+    const badge = e.type === "High"
+      ? "<span class='badge high'>Hochwasser</span>"
+      : "<span class='badge low'>Niedrigwasser</span>";
+    tb.innerHTML += `
+      <tr>
+        <td>${e.timeStr}</td>
+        <td>${badge}</td>
+        <td>${(e.height ?? 0).toFixed(2)}</td>
+      </tr>`;
+  });
+
+  // Trend bestimmen (steigend oder fallend)
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+  const next = j.tides.find(t => new Date(t.iso) > now);
+  const prev = j.tides.slice().reverse().find(t => new Date(t.iso) <= now);
+  let trendTxt = "–";
+  let trendColor = "black";
+
+  if (next && prev) {
+    const rising = prev.type === "Low" && next.type === "High";
+    const falling = prev.type === "High" && next.type === "Low";
+    if (rising) {
+      trendTxt = `Das Wasser steigt (nächstes Hochwasser um ${next.timeStr} Uhr)`;
+      trendColor = "green";
+    } else if (falling) {
+      trendTxt = `Das Wasser fällt (nächstes Niedrigwasser um ${next.timeStr} Uhr)`;
+      trendColor = "red";
     }
+  }
 
-    function nowTz() {
-      return new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
-    }
+  trendEl.textContent = trendTxt;
+  trendEl.style.color = trendColor;
 
-    function computeTrend(tides) {
-      if (!tides || !tides.length) return { text: "–", next: null };
-      const now = nowTz();
-      // nächstes Ereignis
-      const upcoming = tides
-        .map(t => ({ ...t, when: new Date(t.iso) }))
-        .filter(t => t.when >= now)
-        .sort((a,b) => a.when - b.when)[0] || null;
+  document.getElementById("source").textContent =
+    `Quelle: tide-forecast.com (geparst) · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE", { timeZone: TZ })}`;
+}
 
-      if (!upcoming) return { text: "–", next: null };
-      const rising = upcoming.type === "High";
-      const when = tLocal(upcoming.iso);
-      return {
-        text: rising
-          ? `Das Wasser steigt (nächstes Hochwasser um ${when})`
-          : `Das Wasser fällt (nächstes Niedrigwasser um ${when})`,
-        next: upcoming
-      };
-    }
+// 🔁 Lädt Daten für bestimmten Tag (heute, morgen, übermorgen)
+async function loadDay(offset = 0) {
+  const res = await fetch(`data.json?cb=${Date.now()}`);
+  const j = await res.json();
 
-    fetch("data.json?cb=" + Date.now())
-      .then(r => r.json())
-      .then(j => {
-        document.getElementById("meta").textContent =
-          `${j.meta.location} · Zeiten in ${j.meta.timezone}`;
-        document.getElementById("dateLabel").textContent =
-          new Date().toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  // aktuell nur heutiger Tag verfügbar:
+  // du könntest später fetch.js erweitern, um mehrere Tage zu speichern
+  renderDay(j);
+}
 
-        // Tabelle
-        const tb = document.getElementById("tbody");
-        tb.innerHTML = "";
-        (j.tides || []).forEach(e => {
-          const badge = e.type === "High"
-            ? "<span class='badge high'>Hochwasser</span>"
-            : "<span class='badge low'>Niedrigwasser</span>";
-          const displayTime = e.timeStr || tLocal(e.iso);
-          const h = (e.height ?? 0).toFixed(2);
-          tb.innerHTML += `<tr>
-            <td>${displayTime}</td>
-            <td>${badge}</td>
-            <td>${h}</td>
-            <td></td>
-          </tr>`;
-        });
+loadDay();
+</script>
 
-        // Trend unter dem Datum
-        const t = computeTrend(j.tides);
-        document.getElementById("trend").textContent = t.text;
-
-        // Quelle
-        document.getElementById("source").textContent =
-          `Quelle: ${j.meta.source} · Aktualisiert ${new Date(j.meta.generatedAt).toLocaleString("de-DE",{timeZone:TZ})}`;
-      })
-      .catch(e => {
-        document.getElementById("tbody").innerHTML =
-          `<tr><td colspan="4" style="text-align:center;color:#dc2626">Fehler: ${e.message}</td></tr>`;
-      });
-  </script>
 </body>
 </html>
