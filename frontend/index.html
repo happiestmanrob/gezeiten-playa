@@ -23,7 +23,7 @@
     }
     h1 {
       font-size: 2rem;
-      margin-bottom: 0.3rem;
+      margin: 0.5rem 0;
     }
     h2 {
       font-size: 1.1rem;
@@ -93,7 +93,10 @@
         font-size: 1.1rem;
         margin-top: 0.2rem;
       }
-      .headline-small {
+      .headline-desktop {
+        display: none;
+      }
+      .headline-mobile {
         display: block;
         font-size: 1.2rem;
         font-weight: 600;
@@ -102,16 +105,32 @@
       }
       footer {
         font-size: 0.75rem;
+        line-height: 1.4;
+      }
+    }
+
+    /* --- DESKTOP ANSICHT --- */
+    @media (min-width: 769px) {
+      .headline-mobile {
+        display: none;
+      }
+      .headline-desktop {
+        display: inline;
+        font-size: 2rem;
+        font-weight: 700;
       }
     }
   </style>
 </head>
 <body>
   <div class="card">
+    <!-- Überschrift -->
     <div id="headline">
-      <span class="headline-small" id="gezeitenTitle">Gezeiten</span>
-      <h1 id="location">🌊 Playa del Inglés</h1>
+      <span class="headline-mobile">Gezeiten</span>
+      <h1 class="headline-desktop">🌊 Gezeiten · Playa del Inglés</h1>
+      <h1 class="headline-mobile">🌊 Playa del Inglés</h1>
     </div>
+
     <h2 id="datum"></h2>
     <div class="trend" id="trend">Lade Daten...</div>
 
@@ -178,10 +197,19 @@
           ? `Das Wasser steigt<br>(nächstes Hochwasser um ${naechstes.zeit})`
           : `Das Wasser fällt<br>(nächstes Niedrigwasser um ${naechstes.zeit})`;
 
-      // Footer mit WET-Zeit
-      const updatedTime = meta.generatedAt.replace("Atlantic/Canary", "WET");
+      // Footer (deutsches Format + WET)
+      const time = new Date(meta.generatedAt);
+      const formatted = time.toLocaleString("de-DE", {
+        timeZone: "Atlantic/Canary",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
       document.getElementById("footer").innerHTML =
-        `Quelle: tide-forecast.com (geparst)<br>Aktualisiert ${updatedTime} WET`;
+        `Quelle: tide-forecast.com (geparst) · Aktualisiert: ${formatted.replace(",", "")} WET`;
     }
 
     function findeNaechstes(tides, jetzt) {
