@@ -1,98 +1,23 @@
 name: Fetch tides and deploy
-
 on:
   schedule:
-    - cron: "10 0 * * *" # täglich 00:10 UTC
-  workflow_dispatch:      # erlaubt manuelles Starten
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+    - cron: '0 7 * * *'  # Jeden Tag um 07:00 UTC
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Make public dir
-        run: mkdir -p public
-
-      - name: Fetch tides (Node)
-        env:
-          WORLDTIDES_KEY: ${{ secrets.WORLDTIDES_KEY }}
+      - name: Create daily HTML
         run: |
-          node -e '
-          const fs = require("fs");
-          const fetch = global.fetch;
+          echo "Gezeiten-Seite wird automatisch aktualisiert."
+          # Nichts zu tun – index.html holt Live-Daten direkt über API
 
-          const LAT = 27.735, LON = -15.578;  // Playa del Inglés
-          const TZ = "Atlantic/Canary";
-          const key = process.env.WORLDTIDES_KEY;
-
-          (async () => {
-            const now = new Date();
-            const start = Math.floor(now.setHours(0,0,0,0)/1000);
-            const length = 86400;
-
-            // 1️⃣ Gezeiten (WorldTides)
-            const wtUrl = `https://www.worldtides.info/api/v3?extremes&lat=${LAT}&lon=${LON}&start=${start}&length=${length}&key=${key}`;
-            const wtRes = await fetch(wtUrl);
-            const wt = await wtRes.json();
-
-            // 2️⃣ Sonne & Mond (Open-Meteo)
-            const omUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=sunrise,sunset,moon_phase,moon_phase_name&timezone=${encodeURIComponent(TZ)}`;
-            const omRes = await fetch(omUrl);
-            const om = await omRes.json();
-
-            // 3️⃣ Kombinieren
-            const out = {
-              meta: {
-                location: "Playa del Inglés",
-                lat: LAT,
-                lon: LON,
-                timezone: TZ,
-                generatedAt: new Date().toISOString(),
-                source: {
-                  tides: "WorldTides.info",
-                  astronomy: "Open-Meteo"
-                }
-              },
-              tides: (wt.extremes || []).map(e => ({
-                type: e.type,
-                height: e.height,
-                ts: e.dt
-              })),
-              astronomy: {
-                sunrise: (om.daily?.sunrise?.[0]) || null,
-                sunset:  (om.daily?.sunset?.[0])  || null,
-                moonPhaseName: (om.daily?.moon_phase_name?.[0]) || null,
-                moonPhase: (om.daily?.moon_phase?.[0]) ?? null
-              }
-            };
-
-            fs.writeFileSync("public/latest.json", JSON.stringify(out, null, 2));
-            console.log("✅ wrote public/latest.json");
-          })().catch(e => { console.error(e); process.exit(1); });
-          '
-
-      - name: Copy frontend
-        run: cp -r frontend/* public/
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
