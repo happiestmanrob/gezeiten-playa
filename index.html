@@ -160,8 +160,8 @@
       });
 
       // Trend ermitteln
-      const now = new Date().toLocaleString("en-US", { timeZone: TZ });
-      const nowDate = new Date(now);
+const nowDate = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+
       const upcoming = data.tides.find(t => new Date(t.iso) > nowDate);
       let trendText = "–", trendClass = "";
       if (upcoming) {
