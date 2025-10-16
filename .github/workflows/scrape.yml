@@ -1,12 +1,13 @@
 name: Scrape tides and deploy
 
 on:
+  schedule:
+    - cron: "15 0 * * *"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,30 +21,17 @@ jobs:
         run: npm install
 
       - name: Run tide fetch script
-        run: |
-          echo "🌊 Lade aktuelle Gezeiten..."
-          node scripts/fetch.js
-          echo "✅ fetch.js ausgeführt"
+        run: node scripts/fetch.js
 
       - name: Copy frontend to public
         run: |
           mkdir -p public
           cp -r frontend/* public/
-          echo "📂 Frontend-Dateien nach public kopiert"
-
-      - name: Verify output files
-        run: |
-          echo "📄 Inhalt des public-Verzeichnisses:"
-          ls -lah public || echo "⚠️ public-Ordner nicht gefunden!"
-          if [ ! -f public/latest.json ]; then
-            echo "❌ FEHLER: latest.json wurde NICHT erzeugt!"
-            exit 1
-          fi
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           publish_branch: gh-pages
-          commit_message: "🚀 Update: Neue Gezeiten-Daten veröffentlicht"
+          commit_message: "🚀 Automatisches Gezeiten-Update"
