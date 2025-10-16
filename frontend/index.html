@@ -112,7 +112,7 @@
       };
     }
 
-    fetch("latest.json?cb=" + Date.now())
+    fetch("data.json?cb=" + Date.now())
       .then(r => r.json())
       .then(j => {
         document.getElementById("meta").textContent =
