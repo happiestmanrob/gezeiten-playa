@@ -1,198 +1,299 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gezeiten · Playa del Inglés</title>
+  <link rel="icon" href="data:,">
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #e8f5ff;
-      margin: 0;
-      padding: 1rem;
-      text-align: center;
+    :root{
+      --bg: #eaf6ff;
+      --card: #fff;
+      --text: #1f2937;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --hi:#10b981;     /* grün */
+      --lo:#ef4444;     /* rot */
+      --btn:#e5e7eb;
+      --btn-active:#2563eb;
+      --trend-up:#128f44;
+      --trend-down:#c62828;
     }
-    main {
-      background: white;
-      border-radius: 20px;
-      padding: 1.5rem;
-      max-width: 420px;
-      margin: auto;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    h1 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.35rem;
-        white-space: nowrap;
-      }
-      footer {
-        font-size: 0.65rem;
-      }
-    }
-    .trend {
-      font-size: 1.5rem;
-      margin: 0.2rem 0;
-    }
-    .falling { color: #d00; }
-    .rising { color: #008000; }
-
-    .days {
-      margin: 0.6rem 0;
-    }
-    .days button {
-      border: 1px solid #bbb;
-      border-radius: 8px;
-      background: #f5f5f5;
-      margin: 2px;
-      padding: 5px 10px;
-      cursor: pointer;
-    }
-    .days button.active {
-      background: #0078ff;
-      color: white;
-    }
-    .dropdown {
-      margin-top: 0.5rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.8rem;
-      text-align: center;
-    }
-    th, td {
-      padding: 0.5rem;
-    }
-    tr:not(:last-child) td {
-      border-bottom: 1px solid #eee;
-    }
-    .low { color: red; }
-    .high { color: green; }
-
-    footer {
-      font-size: 0.75rem;
-      color: #777;
-      margin-top: 1rem;
-    }
-    .sunmoon {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-    }
-    .sunmoon div {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .spring {
-      color: #0057ff;
-      font-weight: 600;
+    html,body{margin:0;background:linear-gradient(180deg,#eaf6ff, #dff3ff 40%, #eaf6ff);}
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"; color:var(--text);}
+    .wrap{max-width:900px;margin:40px auto;padding:0 16px;}
+    .card{background:var(--card);border-radius:22px;box-shadow:0 20px 40px rgba(0,0,0,.08);padding:28px 28px 20px;}
+    .hdr{display:flex;align-items:center;gap:12px;justify-content:center}
+    .logo{font-size:36px}
+    h1{font-size:36px;line-height:1.15;margin:0}
+    .date{margin-top:8px;text-align:center;font-weight:600}
+    .date small{color:var(--muted);font-weight:500}
+    .arrow{font-size:28px;line-height:1;margin:18px 0 2px;text-align:center}
+    .trend{margin:0 auto 10px;text-align:center}
+    .trend .line1{font-weight:700}
+    .trend.up{color:var(--trend-up)}
+    .trend.down{color:var(--trend-down)}
+    .controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0 8px}
+    .btn{padding:10px 16px;border-radius:10px;border:1px solid var(--btn);background:#f8fafc;color:#1f2937;cursor:pointer}
+    .btn[aria-pressed="true"]{background:var(--btn-active);color:#fff;border-color:var(--btn-active)}
+    .select{padding:10px 12px;border-radius:10px;border:1px solid var(--btn);background:#fff;min-width:170px}
+    table{width:100%;border-collapse:collapse;margin-top:16px}
+    th,td{padding:14px 10px;border-bottom:1px solid var(--border);text-align:center}
+    th{color:#374151;font-weight:700}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
+    .hi{background:#eafaf3;color:var(--hi)}
+    .lo{background:#feeeee;color:var(--lo)}
+    .foot{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 8px;color:var(--muted);font-size:14px}
+    .foot .chip{display:flex;align-items:center;gap:6px}
+    .source{margin-top:6px;text-align:center;color:var(--muted);font-size:14px}
+    .source small{color:var(--muted)}
+    @media (max-width:640px){
+      .card{padding:22px 18px}
+      .hdr h1{font-size:26px}
+      .logo{font-size:30px}
+      .source{font-size:12px}
+      th,td{padding:12px 8px}
+      .date{font-size:16px}
+      .arrow{font-size:24px;margin-top:14px}
+      .trend .line1{font-size:18px}
+      .trend .line2{font-size:15px}
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>🌊 Gezeiten · Playa del Inglés</h1>
-    <p id="date"></p>
-    <div id="trend" class="trend"></div>
-    <div class="days">
-      <button id="todayBtn">Heute</button>
-      <button id="tomorrowBtn">Morgen</button>
-      <button id="dayAfterBtn">Übermorgen</button>
+  <div class="wrap">
+    <div class="card">
+      <div class="hdr">
+        <div class="logo">🌊</div>
+        <h1>Gezeiten · Playa del Inglés</h1>
+      </div>
+
+      <div class="date" id="dateTop"></div>
+
+      <!-- Trend -->
+      <div class="arrow" id="trendArrow">⬆️</div>
+      <div id="trend" class="trend">
+        <div class="line1">Das Wasser steigt</div>
+        <div class="line2">(nächstes Hochwasser um 00:03)</div>
+      </div>
+
+      <!-- Buttons + Dropdown -->
+      <div class="controls">
+        <button class="btn" id="btnToday" aria-pressed="true">Heute</button>
+        <button class="btn" id="btnTomorrow" aria-pressed="false">Morgen</button>
+        <button class="btn" id="btnOvermorrow" aria-pressed="false">Übermorgen</button>
+        <select id="daySelect" class="select" title="Datum wählen"></select>
+      </div>
+
+      <!-- Tabelle -->
+      <table>
+        <thead>
+          <tr>
+            <th>Zeit</th>
+            <th>Typ</th>
+            <th>Höhe (m)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="3" style="text-align:center;color:#9ca3af">Lade Daten …</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Sonne / Mond -->
+      <div class="foot" id="astroRow">
+        <div class="chip" id="sunrise">🌞 Auf: –</div>
+        <div class="chip" id="sunset">🌞 Unter: –</div>
+        <div class="chip" id="moonrise">🌕 Auf: –</div>
+        <div class="chip" id="moonset">🌕 Unter: –</div>
+      </div>
+
+      <div class="source" id="source">Quelle: tide-forecast.com · <small>Aktualisiert –</small></div>
     </div>
-    <div class="dropdown">
-      <select id="daySelect"></select>
-    </div>
-    <table id="tides">
-      <thead>
-        <tr><th>Zeit</th><th>Typ</th><th>Höhe (m)</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  </div>
 
-    <div id="sunmoon" class="sunmoon"></div>
-    <footer id="footer"></footer>
-  </main>
+<script>
+(async function(){
+  const TZ = "Atlantic/Canary";           // Rechnen in Kanaren-Zeit
+  const TZ_LABEL = "WET";                  // Anzeige-Label
 
-  <script>
-    async function loadTides() {
-      const res = await fetch("latest.json");
-      const data = await res.json();
-      const days = data.days;
+  const els = {
+    dateTop: document.getElementById('dateTop'),
+    trend: document.getElementById('trend'),
+    trendArrow: document.getElementById('trendArrow'),
+    tbody: document.getElementById('tbody'),
+    sunrise: document.getElementById('sunrise'),
+    sunset: document.getElementById('sunset'),
+    moonrise: document.getElementById('moonrise'),
+    moonset: document.getElementById('moonset'),
+    source: document.getElementById('source'),
+    sel: document.getElementById('daySelect'),
+    btnToday: document.getElementById('btnToday'),
+    btnTomorrow: document.getElementById('btnTomorrow'),
+    btnOvermorrow: document.getElementById('btnOvermorrow'),
+  };
 
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
+  // Helpers
+  const fmtDate = (d) =>
+    d.toLocaleDateString('de-DE',{weekday:'long', day:'2-digit', month:'long', year:'numeric', timeZone: TZ});
+  const fmtDateShort = (d) =>
+    d.toLocaleDateString('de-DE',{day:'2-digit', month:'2-digit', year:'numeric', timeZone: TZ});
+  const fmtTime = (dt) =>
+    new Date(dt).toLocaleTimeString('de-DE',{hour:'2-digit', minute:'2-digit', hour12:false, timeZone: TZ});
 
-      const dateEl = document.getElementById("date");
-      const trendEl = document.getElementById("trend");
-      const tbody = document.querySelector("#tides tbody");
-      const footer = document.getElementById("footer");
-      const select = document.getElementById("daySelect");
-      const sunmoonEl = document.getElementById("sunmoon");
+  // 12h-Strings wie "8:04AM" → Date (heute) in TZ
+  function parse12hToISO(dateISO, hhmmAMPM) {
+    const m = String(hhmmAMPM).trim().match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+    if(!m) return null;
+    let h = +m[1] % 12;
+    if(m[3].toUpperCase()==='PM') h+=12;
+    const mins = +m[2];
+    // dateISO ist "YYYY-MM-DD"
+    return new Date(`${dateISO}T${String(h).padStart(2,'0')}:${String(mins).padStart(2,'0')}:00`).toISOString();
+  }
 
-      days.forEach((d, i) => {
-        const dateObj = new Date(d.date.replace(/[^0-9\-]/g, ""));
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = dateObj.toLocaleDateString("de-DE");
-        if (d.springTide) {
-          option.style.color = d.moonPhase.includes("Full") ? "blue" : "deepskyblue";
-        }
-        select.appendChild(option);
-      });
+  // Aktiv-Style Buttons
+  function setActive(which){
+    els.btnToday.setAttribute('aria-pressed', which==='today');
+    els.btnTomorrow.setAttribute('aria-pressed', which==='tomorrow');
+    els.btnOvermorrow.setAttribute('aria-pressed', which==='overmorrow');
+  }
 
-      function render(dayIndex) {
-        const d = days[dayIndex];
-        dateEl.textContent = d.date;
-        tbody.innerHTML = "";
-        d.entries.forEach(e => {
-          const tr = document.createElement("tr");
-          const cls = e.type.toLowerCase().includes("low") ? "low" : "high";
-          tr.innerHTML = `<td>${e.time}</td><td class="${cls}">${e.type}</td><td>${e.height}</td>`;
-          tbody.appendChild(tr);
-        });
+  // JSON laden
+  let data;
+  try{
+    const r = await fetch('latest.json?cb=' + Date.now());
+    data = await r.json();
+  }catch(e){
+    els.tbody.innerHTML = `<tr><td colspan="3" style="color:#b91c1c">Fehler beim Laden: ${e.message}</td></tr>`;
+    return;
+  }
 
-        // Trend bestimmen
-        const nextLow = d.entries.find(e => e.type.toLowerCase().includes("low"));
-        const nextHigh = d.entries.find(e => e.type.toLowerCase().includes("high"));
-        if (nextLow && nextHigh) {
-          trendEl.innerHTML = d.entries[0].type.toLowerCase().includes("low")
-            ? '<div class="falling">⬇️</div><div class="falling">Das Wasser fällt<br>(nächstes Niedrigwasser um ' + nextLow.time + ')</div>'
-            : '<div class="rising">⬆️</div><div class="rising">Das Wasser steigt<br>(nächstes Hochwasser um ' + nextHigh.time + ')</div>';
-        }
+  // Quellenzeile
+  try{
+    const gen = new Date(data.meta?.generatedAt || Date.now());
+    const genStr = gen.toLocaleString('de-DE',{ timeZone: TZ, hour:'2-digit', minute:'2-digit' });
+    els.source.innerHTML = `Quelle: tide-forecast.com (geparst) · <small>Aktualisiert: ${genStr} ${TZ_LABEL}</small>`;
+  }catch{ /* noop */ }
 
-        // Sonne & Mond
-        sunmoonEl.innerHTML = `
-          <div>🌅 <strong>Auf:</strong> ${d.sunrise || "–"}</div>
-          <div>🌇 <strong>Unter:</strong> ${d.sunset || "–"}</div>
-          <div>🌙 <strong>Auf:</strong> ${d.moonrise || "–"}</div>
-          <div>🌘 <strong>Unter:</strong> ${d.moonset || "–"}</div>
-          <div>${d.moonPhase ? "🌔 " + d.moonPhase : ""}${d.springTide ? ' <span class="spring">(Springflut)</span>' : ""}</div>
-        `;
-
-        footer.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${new Date(data.updated).toLocaleString("de-DE", { timeZone: "Atlantic/Canary" })}`;
+  // Tage-Liste vorbereiten
+  let days = [];
+  if(Array.isArray(data.days) && data.days.length){
+    days = data.days.map(d => ({
+      date: d.date,                                    // "YYYY-MM-DD"
+      tides: (d.tides||[]).map(t => ({
+        timeISO: t.timeISO || t.iso || parse12hToISO(d.date, t.time12 || t.time || ''),
+        type: (t.type||'').toLowerCase().includes('high') ? 'High' : 'Low',
+        height: Number(t.height_m ?? t.height ?? 0)
+      })),
+      sun: {
+        sunrise: d.sun?.sunriseISO || parse12hToISO(d.date, d.sun?.sunrise),
+        sunset:  d.sun?.sunsetISO  || parse12hToISO(d.date, d.sun?.sunset )
+      },
+      moon:{
+        moonrise: d.moon?.moonriseISO || parse12hToISO(d.date, d.moon?.moonrise),
+        moonset:  d.moon?.moonsetISO  || parse12hToISO(d.date, d.moon?.moonset )
       }
+    }));
+  } else if (Array.isArray(data.tides)) {
+    // Fallback: nur Heute im alten Format
+    const todayISO = new Date().toLocaleDateString('sv-SE',{timeZone:TZ}); // YYYY-MM-DD
+    days = [{
+      date: todayISO,
+      tides: data.tides.map(e=>({
+        timeISO: e.iso || parse12hToISO(todayISO, e.timeStr || e.time),
+        type: (e.type||'').toLowerCase().includes('high') ? 'High' : 'Low',
+        height: Number(e.height_m ?? e.height ?? 0)
+      })),
+      sun: { sunrise: data.astronomy?.sunrise, sunset: data.astronomy?.sunset },
+      moon:{ moonrise: data.astronomy?.moonrise, moonset: data.astronomy?.moonset }
+    }];
+  }
 
-      select.addEventListener("change", e => render(e.target.value));
-      document.getElementById("todayBtn").onclick = () => render(0);
-      document.getElementById("tomorrowBtn").onclick = () => render(1);
-      document.getElementById("dayAfterBtn").onclick = () => render(2);
+  // Dropdown füllen
+  els.sel.innerHTML = '';
+  days.slice(0,30).forEach(d=>{
+    const dt = new Date(d.date + 'T00:00:00Z');
+    const opt = document.createElement('option');
+    opt.value = d.date;
+    opt.textContent = fmtDateShort(dt);
+    els.sel.appendChild(opt);
+  });
 
-      render(0);
+  // Auswahl-Logik
+  const nowCanary = new Date(new Date().toLocaleString('en-CA',{timeZone:TZ}));
+  const todayISO = nowCanary.toISOString().slice(0,10);
+  const tomorrowISO = new Date(+nowCanary + 86400000).toISOString().slice(0,10);
+  const overmorrowISO = new Date(+nowCanary + 2*86400000).toISOString().slice(0,10);
+
+  function selectByDate(dateISO){
+    const idx = days.findIndex(d=>d.date===dateISO);
+    if(idx>=0) els.sel.selectedIndex = idx;
+    renderDay(days[idx>=0?idx:0]);
+  }
+  function renderDay(day){
+    // Datum oben
+    els.dateTop.textContent = fmtDate(new Date(day.date + 'T00:00:00Z'));
+
+    // Tabelle (immer 4 Einträge wenn vorhanden)
+    els.tbody.innerHTML = '';
+    (day.tides||[]).slice(0,4).forEach(t=>{
+      const typ = (t.type==='High') ? 'Hochwasser' : 'Niedrigwasser';
+      const cls = (t.type==='High') ? 'hi' : 'lo';
+      const when = t.timeISO ? fmtTime(t.timeISO) : '–';
+      const h = (isFinite(t.height) ? t.height : 0).toFixed(2);
+      els.tbody.insertAdjacentHTML('beforeend',
+        `<tr>
+          <td>${when}</td>
+          <td><span class="badge ${cls}">${typ}</span></td>
+          <td>${h}</td>
+        </tr>`);
+    });
+    if(!day.tides || day.tides.length===0){
+      els.tbody.innerHTML = `<tr><td colspan="3" style="color:#9ca3af">Keine Daten</td></tr>`;
     }
 
-    loadTides();
-  </script>
+    // Trend (kurz, zweizeilig)
+    const now = new Date(new Date().toLocaleString('en-CA',{timeZone:TZ}));
+    const ref = new Date(day.date + 'T00:00:00Z');
+    // Wenn ausgewählter Tag heute ist → ab jetzt, sonst ab Tagesbeginn des gewählten Tages
+    const pivot = (day.date===todayISO) ? now : ref;
+
+    // Nächste kommende Tide aus allen Days(!) ab pivot
+    const upcoming = days
+      .flatMap(d => (d.tides||[]).map(t => ({...t, date:d.date})))
+      .filter(t => t.timeISO && new Date(t.timeISO) > pivot)
+      .sort((a,b)=> new Date(a.timeISO)-new Date(b.timeISO))[0];
+
+    const isUp = upcoming && upcoming.type==='High';
+    els.trend.className = 'trend ' + (isUp?'up':'down');
+    els.trendArrow.textContent = isUp ? '⬆️' : '⬇️';
+    els.trend.querySelector('.line1').textContent = 'Das Wasser ' + (isUp?'steigt':'fällt');
+    const whenNext = upcoming ? fmtTime(upcoming.timeISO) : '–';
+    els.trend.querySelector('.line2').textContent =
+      `(nächstes ${isUp?'Hochwasser':'Niedrigwasser'} um ${whenNext})`;
+
+    // Sonne / Mond
+    els.sunrise.textContent  = '🌞 Auf: '   + (day.sun?.sunrise ? fmtTime(day.sun.sunrise)   : '–');
+    els.sunset.textContent   = '🌞 Unter: ' + (day.sun?.sunset  ? fmtTime(day.sun.sunset)    : '–');
+    els.moonrise.textContent = '🌕 Auf: '   + (day.moon?.moonrise ? fmtTime(day.moon.moonrise): '–');
+    els.moonset.textContent  = '🌕 Unter: ' + (day.moon?.moonset  ? fmtTime(day.moon.moonset) : '–');
+  }
+
+  // Events
+  els.sel.addEventListener('change', ()=> {
+    const val = els.sel.value;
+    setActive(''); // Dropdown gewählt → Buttons neutral
+    renderDay(days.find(d=>d.date===val) || days[0]);
+  });
+  els.btnToday.addEventListener('click', ()=>{ setActive('today');  selectByDate(todayISO); });
+  els.btnTomorrow.addEventListener('click', ()=>{ setActive('tomorrow'); selectByDate(tomorrowISO); });
+  els.btnOvermorrow.addEventListener('click', ()=>{ setActive('overmorrow'); selectByDate(overmorrowISO); });
+
+  // Initial: Heute (falls nicht vorhanden, erster Tag)
+  if(days.some(d=>d.date===todayISO)){ setActive('today'); selectByDate(todayISO); }
+  else { setActive(''); renderDay(days[0]); }
+
+})();
+</script>
 </body>
 </html>
