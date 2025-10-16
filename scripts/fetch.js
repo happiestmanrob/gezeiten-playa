@@ -1,46 +1,59 @@
 // scripts/fetch.js
+// ------------------------------------------------------
+// Holt exakte Tageszeiten von tide-forecast.com (Playa del Inglés),
+// speichert sie als public/latest.json
+// ------------------------------------------------------
+
 import fs from "fs";
 import path from "path";
 import * as cheerio from "cheerio";
-import fetch from "node-fetch";
 
+// Falls Node < 18: optionales Fetch-Fallback
+const fetch = global.fetch || ((...args) => import("node-fetch").then(({ default: f }) => f(...args)));
+
+// ------------------------------------------------------
+// Konfiguration
+// ------------------------------------------------------
 const TIDE_URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
 const TIMEZONE = "Atlantic/Canary";
-const OUTDIR = path.join(process.cwd(), "public");
 
-if (!fs.existsSync(OUTDIR)) fs.mkdirSync(OUTDIR, { recursive: true });
-
-const pad = n => String(n).padStart(2, "0");
-
-function to24h(h, m, ampm) {
-  let hh = parseInt(h, 10);
-  const mm = parseInt(m, 10);
-  if (ampm.toUpperCase() === "PM" && hh !== 12) hh += 12;
-  if (ampm.toUpperCase() === "AM" && hh === 12) hh = 0;
-  return `${pad(hh)}:${pad(mm)}`;
+// ------------------------------------------------------
+// Hilfsfunktionen
+// ------------------------------------------------------
+function pad(n) {
+  return String(n).padStart(2, "0");
 }
 
-async function getHtml(url) {
+function to24h(h, m, ampm) {
+  let hour = parseInt(h, 10);
+  const min = parseInt(m, 10);
+  if (ampm.toUpperCase() === "PM" && hour !== 12) hour += 12;
+  if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
+  return `${pad(hour)}:${pad(min)}`;
+}
+
+function todayYMD(tz) {
+  const d = new Date();
+  return new Date(d.toLocaleString("en-US", { timeZone: tz }));
+}
+
+// ------------------------------------------------------
+// HTML abrufen
+// ------------------------------------------------------
+async function fetchHtml(url) {
   const res = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; GezeitenBot/2.0)",
-      "Accept": "text/html"
-    }
+      "User-Agent": "Mozilla/5.0 (compatible; TideBot/1.0)",
+      "Accept": "text/html,application/xhtml+xml",
+    },
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} @ ${url}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.text();
 }
 
-function extractMeters(text) {
-  // Alle Werte mit m (z. B. "1.68 m" oder "(1.68 m)")
-  const matches = [...text.matchAll(/([\d.,]+)\s*m/gi)];
-  if (matches.length === 0) return null;
-  // Nehme den letzten Treffer (meist der korrekte Meterwert)
-  const val = matches[matches.length - 1][1];
-  return parseFloat(val.replace(",", "."));
-}
-
-
+// ------------------------------------------------------
+// Gezeiten aus HTML extrahieren (robust)
+// ------------------------------------------------------
 function parseTides(html) {
   const $ = cheerio.load(html);
   const rows = [];
@@ -84,69 +97,48 @@ function parseTides(html) {
   });
 
   console.log(`✅ ${rows.length} Gezeiten-Einträge gefunden`);
-  return rows;
-}
-
-}
-
-
-
-
   return rows.slice(0, 4);
 }
 
-function parseLiveTrend(html) {
-  const $ = cheerio.load(html);
-  const bodyText = $("body").text().replace(/\s+/g, " ");
-  const rising = /The tide is rising/i.test(bodyText);
-  const falling = /The tide is falling/i.test(bodyText);
-
-  const nextHigh = bodyText.match(/Next[^A]*HIGH TIDE[^A]*at\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  const nextLow  = bodyText.match(/Next[^A]*LOW TIDE[^A]*at\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-
-  const now = new Date(new Date().toLocaleString("en-US", { timeZone: TIMEZONE }));
-
-  function toIso(h, m, ap) {
-    const d = new Date(now);
-    const timeStr = to24h(h, m, ap);
-    const [hh, mm] = timeStr.split(":").map(Number);
-    d.setHours(hh, mm, 0, 0);
-    return d;
-  }
-
-  const nextEvents = [];
-  if (nextHigh) nextEvents.push({ type: "High", date: toIso(nextHigh[1], nextHigh[2], nextHigh[3]) });
-  if (nextLow)  nextEvents.push({ type: "Low",  date: toIso(nextLow[1],  nextLow[2],  nextLow[3]) });
-
-  const upcoming = nextEvents.filter(e => e.date > now).sort((a,b)=>a.date-b.date)[0];
-
-  let state = rising ? "rising" : falling ? "falling" : null;
-  return {
-    state,
-    next: upcoming
-      ? { type: upcoming.type, timeStr: `${pad(upcoming.date.getHours())}:${pad(upcoming.date.getMinutes())}` }
-      : null
-  };
+// ------------------------------------------------------
+// ISO-Zeit hinzufügen
+// ------------------------------------------------------
+function attachDateToTimeStr(timeStr, tz) {
+  const today = todayYMD(tz);
+  const [hh, mm] = timeStr.split(":").map(Number);
+  today.setHours(hh, mm, 0, 0);
+  return today.toISOString();
 }
 
+// ------------------------------------------------------
+// Hauptablauf
+// ------------------------------------------------------
 (async () => {
-  const html = await getHtml(TIDE_URL);
+  console.log("🌐 Lade Seite:", TIDE_URL);
+  const html = await fetchHtml(TIDE_URL);
   const tides = parseTides(html);
-  const trend = parseLiveTrend(html);
+
+  const tidesWithIso = tides.map((t) => ({
+    ...t,
+    iso: attachDateToTimeStr(t.timeStr, TIMEZONE),
+  }));
 
   const out = {
-    location: "Playa del Inglés",
-    timezone: TIMEZONE,
-    dateDe: new Date().toLocaleDateString("de-DE", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric",
-      timeZone: TIMEZONE
-    }),
-    generatedAt: new Date().toISOString(),
-    tides,
-    trend
+    meta: {
+      location: "Playa del Inglés",
+      timezone: TIMEZONE,
+      generatedAt: new Date().toISOString(),
+      source: "tide-forecast.com (parsed)",
+    },
+    tides: tidesWithIso,
   };
 
-fs.writeFileSync(path.join(OUTDIR, "latest.json"), JSON.stringify(out, null, 2));
-console.log("✅ public/latest.json geschrieben mit", tides.length, "Einträgen");
+  const outDir = path.join(process.cwd(), "public");
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, "latest.json"), JSON.stringify(out, null, 2));
 
-})();
+  console.log(`✅ public/latest.json geschrieben mit ${tidesWithIso.length} Einträgen`);
+})().catch((err) => {
+  console.error("❌ Fetch failed:", err);
+  process.exit(1);
+});
