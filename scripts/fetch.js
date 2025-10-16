@@ -80,34 +80,33 @@ function parseTides(html) {
     if (!tm) return;
 
     // --- Höhe verarbeiten ---
-let height = null;
+    let height = null;
 
-// Versuche zuerst explizite Meter
-const mMatch = heightTxt.match(/([\d.,]+)\s*m/i);
-if (mMatch) {
-  height = parseFloat(mMatch[1].replace(",", "."));
-}
-
-// Wenn keine Meter-Angabe, prüfe auf Fuß
-if (height === null) {
-  const ftMatch = heightTxt.match(/([\d.,]+)\s*ft/i);
-  if (ftMatch) {
-    const ft = parseFloat(ftMatch[1].replace(",", "."));
-    height = +(ft * 0.3048).toFixed(2); // in Meter konvertieren
-  }
-}
-
-// Falls gar keine Einheit angegeben ist, gehe von ft aus (Standard tide-forecast.com)
-if (height === null) {
-  const numMatch = heightTxt.match(/([\d.,]+)/);
-  if (numMatch) {
-    const ft = parseFloat(numMatch[1].replace(",", "."));
-    height = +(ft * 0.3048).toFixed(2);
-  }
-}
-
+    // 1️⃣ Explizit Meter?
+    const mMatch = heightTxt.match(/([\d.,]+)\s*m/i);
+    if (mMatch) {
+      height = parseFloat(mMatch[1].replace(",", "."));
     }
 
+    // 2️⃣ Wenn keine Meter-Angabe, prüfe auf Fuß
+    if (height === null) {
+      const ftMatch = heightTxt.match(/([\d.,]+)\s*ft/i);
+      if (ftMatch) {
+        const ft = parseFloat(ftMatch[1].replace(",", "."));
+        height = +(ft * 0.3048).toFixed(2); // ft → m
+      }
+    }
+
+    // 3️⃣ Wenn gar keine Einheit angegeben: Standard = ft
+    if (height === null) {
+      const numMatch = heightTxt.match(/([\d.,]+)/);
+      if (numMatch) {
+        const ft = parseFloat(numMatch[1].replace(",", "."));
+        height = +(ft * 0.3048).toFixed(2);
+      }
+    }
+
+    // Zeit + Typ
     const timeStr = to24h(tm[1], tm[2], tm[3]);
     const type = /high/i.test(typeTxt) ? "High" : "Low";
 
@@ -117,6 +116,7 @@ if (height === null) {
   console.log(`✅ ${rows.length} Gezeiten-Einträge gefunden`);
   return rows.slice(0, 4);
 }
+
 
 // ------------------------------------------------------
 // ISO-Zeit hinzufügen
