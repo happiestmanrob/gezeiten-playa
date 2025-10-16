@@ -1,105 +1,85 @@
 // scripts/fetch.js
-// Holt exakte Tageszeiten für Playa del Inglés von tide-forecast.com
-// und schreibt sie als public/latest.json (nur: Zeit, Typ, Höhe in m).
+// Holt Gezeiten-Daten von tide-forecast.com für Playa del Inglés
+// und erstellt 3 Dateien (data-0.json, data-1.json, data-2.json)
+// für heute, morgen und übermorgen.
 
 import fs from "fs";
 import path from "path";
 import * as cheerio from "cheerio";
+import fetch from "node-fetch";
 
 // ---- Konfiguration ----
-const TIDE_URL =
-  "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
+const BASE_URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
+const LAT = 27.7416;
+const LON = -15.5989;
 const TIMEZONE = "Atlantic/Canary";
+const OUT_DIR = path.join(process.cwd(), "public");
 
-// Helpers
-const pad = (n) => String(n).padStart(2, "0");
+// ---- Helper-Funktionen ----
+function pad(n) { return String(n).padStart(2, "0"); }
+
 function to24h(h, m, ampm) {
   let hour = parseInt(h, 10);
   const min = parseInt(m, 10);
-  const am = ampm.toUpperCase() === "AM";
-  if (!am && hour !== 12) hour += 12;
-  if (am && hour === 12) hour = 0;
+  if (ampm.toUpperCase() === "PM" && hour !== 12) hour += 12;
+  if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
   return `${pad(hour)}:${pad(min)}`;
 }
-function todayAt(timeHHMM, tz) {
-  const [hh, mm] = timeHHMM.split(":").map(Number);
-  // "heute in TZ" als ISO erzeugen
-  const nowTz = new Date(
-    new Date().toLocaleString("en-US", { timeZone: tz })
-  );
-  nowTz.setHours(hh, mm, 0, 0);
-  return nowTz.toISOString();
+
+function toIsoForDay(baseDate, timeStr, tz) {
+  const [hh, mm] = timeStr.split(":").map(Number);
+  const d = new Date(baseDate.toLocaleString("en-US", { timeZone: tz }));
+  d.setHours(hh, mm, 0, 0);
+  return d.toISOString();
 }
 
+// ---- HTML abrufen ----
 async function fetchHtml(url) {
   const res = await fetch(url, {
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-      "Accept-Language": "en,en-US;q=0.9",
-      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "Mozilla/5.0 (compatible; GezeitenBot/1.0; +https://github.com/)",
+      "Accept": "text/html,application/xhtml+xml",
     },
   });
-  if (!res.ok) throw new Error(`tide-forecast antwortete mit ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status} beim Abrufen von ${url}`);
   return await res.text();
 }
 
+// ---- Gezeiten aus HTML parsen ----
 function parseTides(html) {
   const $ = cheerio.load(html);
-  const rows = [];
+  const h2 = $('h2:contains("Today\'s tide times for Playa del Ingles")').first();
+  let rows = [];
 
-  // Suche die Tabelle mit der Spalte "Height"
-  const table = $('table:has(th:contains("Height"))').first();
-  if (table.length) {
+  if (h2.length) {
+    const table = h2.parent().find("table").first();
     table.find("tbody tr").each((_, tr) => {
       const tds = $(tr).find("td");
-      if (tds.length < 3) return;
+      const typeTxt = $(tds[0]).text().trim();
+      const timeTxt = $(tds[1]).text().trim();
+      const heightTxt = $(tds[2]).text().trim();
 
-      const typeTxt = $(tds[0]).text().trim(); // "Low Tide"/"High Tide"
-      const timeTxt = $(tds[1]).text().trim(); // "4:27 AM"
-      const hCell = $(tds[2]).text().trim();   // "0.64 m (2.1 ft)" o.ä.
+      const m = timeTxt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!m) return;
 
-      // AM/PM -> 24h
-      const mt = timeTxt.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (!mt) return;
-      const timeStr = to24h(mt[1], mt[2], mt[3]);
+      const timeStr = to24h(m[1], m[2], m[3]);
+      const height = parseFloat((heightTxt.match(/([\d.]+)/) || [])[1]);
+      const type = /high/i.test(typeTxt) ? "High" : "Low";
 
-      // Meterwert robust herausziehen
-      let height = null;
-      const mMatch = hCell.match(/(\d+(?:\.\d+)?)\s*m\b/);
-      if (mMatch) {
-        height = parseFloat(mMatch[1]);
-      } else {
-        // Fallback: nur feet gefunden? -> in Meter umrechnen
-        const ftMatch = hCell.match(/(\d+(?:\.\d+)?)\s*ft\b/);
-        if (ftMatch) {
-          height = parseFloat(ftMatch[1]) * 0.3048;
-        }
-      }
-      if (height == null) return;
-
-      rows.push({
-        type: /high/i.test(typeTxt) ? "High" : "Low",
-        timeStr,
-        height: Math.round(height * 100) / 100, // auf 2 Stellen
-        iso: todayAt(timeStr, TIMEZONE),
-      });
+      rows.push({ type, timeStr, height });
     });
   }
 
-  // Fallback (falls DOM-Struktur abweicht)
+  // Fallback falls Tabelle nicht gefunden
   if (rows.length < 4) {
-    const slice = $("body").text().replace(/\s+/g, " ");
-    const re =
-      /(Low Tide|High Tide)[^0-9]*?(\d{1,2}):(\d{2})\s*(AM|PM)[^0-9]*?(\d+(?:\.\d+)?)\s*m/gi;
+    const allText = $("body").text().replace(/\s+/g, " ");
+    const re = /(Low Tide|High Tide)[^0-9]*?(\d{1,2}):(\d{2})\s*(AM|PM)[^0-9]*?([\d.]+)\s*m/gi;
     let m;
-    while ((m = re.exec(slice)) && rows.length < 4) {
-      const timeStr = to24h(m[2], m[3], m[4]);
+    while ((m = re.exec(allText)) && rows.length < 4) {
       rows.push({
         type: /high/i.test(m[1]) ? "High" : "Low",
-        timeStr,
+        timeStr: to24h(m[2], m[3], m[4]),
         height: parseFloat(m[5]),
-        iso: todayAt(timeStr, TIMEZONE),
       });
     }
   }
@@ -107,27 +87,45 @@ function parseTides(html) {
   return rows.slice(0, 4);
 }
 
-(async () => {
-  const html = await fetchHtml(TIDE_URL);
+// ---- Hauptfunktion: Daten abrufen und speichern ----
+async function fetchTidesForDay(offset = 0) {
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + offset);
+
+  const html = await fetchHtml(BASE_URL);
   const tides = parseTides(html);
+
+  const tidesWithIso = tides.map(t => ({
+    ...t,
+    iso: toIsoForDay(targetDate, t.timeStr, TIMEZONE)
+  }));
 
   const out = {
     meta: {
       location: "Playa del Inglés",
+      lat: LAT,
+      lon: LON,
       timezone: TIMEZONE,
       generatedAt: new Date().toISOString(),
+      dayOffset: offset,
       source: "tide-forecast.com (parsed)",
     },
-    tides,
+    tides: tidesWithIso,
   };
 
-  const outDir = path.join(process.cwd(), "frontend");
-  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, "data.json");
-  fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
-  console.log("✅ Wrote frontend/data.json with", tides.length, "entries");
+  const fileName = `data-${offset}.json`;
+  if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.writeFileSync(path.join(OUT_DIR, fileName), JSON.stringify(out, null, 2));
+  console.log(`✅ ${fileName} geschrieben (${tides.length} Einträge)`);
+}
 
-})().catch((err) => {
-  console.error("❌ Fetch failed:", err);
+// ---- Starte alle drei Tage ----
+(async () => {
+  for (let i = 0; i <= 2; i++) {
+    await fetchTidesForDay(i);
+  }
+  console.log("🎉 Alle 3 Tage erfolgreich abgerufen!");
+})().catch(err => {
+  console.error("❌ Fehler beim Abrufen:", err);
   process.exit(1);
 });
