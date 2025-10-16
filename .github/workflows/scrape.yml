@@ -22,6 +22,12 @@ jobs:
       - name: Run tide fetch script
         run: node scripts/fetch.js
 
+      - name: Copy frontend to public
+        run: |
+          mkdir -p public
+          cp -r frontend/* public/
+
+
       - name: Verify output files
         run: |
           echo "Inhalt des public-Verzeichnisses:"
