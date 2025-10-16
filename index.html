@@ -56,16 +56,14 @@
       border-radius: 0.5rem;
       padding: 0.2rem 0.5rem;
     }
+    .trend {
+      font-weight: 600;
+      margin: 1rem 0;
+    }
     footer {
       margin-top: 1rem;
       color: #777;
       font-size: 0.9rem;
-      line-height: 1.3;
-    }
-    .trend {
-      font-weight: 600;
-      margin: 1rem 0;
-      color: #008000;
     }
     button {
       background: #f5f5f5;
@@ -89,10 +87,6 @@
         font-size: 1.3rem;
         margin-bottom: 0.2rem;
       }
-      h2 {
-        font-size: 1.1rem;
-        margin-top: 0.2rem;
-      }
       .headline-desktop {
         display: none;
       }
@@ -109,22 +103,18 @@
       }
     }
 
-    /* --- DESKTOP ANSICHT --- */
     @media (min-width: 769px) {
       .headline-mobile {
         display: none;
       }
       .headline-desktop {
         display: inline;
-        font-size: 2rem;
-        font-weight: 700;
       }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <!-- Überschrift -->
     <div id="headline">
       <span class="headline-mobile">Gezeiten</span>
       <h1 class="headline-desktop">🌊 Gezeiten · Playa del Inglés</h1>
@@ -155,12 +145,16 @@
   </div>
 
   <script>
-    let daten = null;
+    let alleDaten = {};
+    let tagIndex = 0;
 
     async function ladeDaten() {
       try {
         const res = await fetch("latest.json?_=" + Date.now());
-        daten = await res.json();
+        const daten = await res.json();
+
+        // Simulation: wir nehmen die nächsten 3 Tage an, hier nur denselben Tag mehrfach
+        alleDaten = [daten, daten, daten]; 
         aktualisiereAnsicht();
       } catch (err) {
         document.getElementById("trend").textContent = "❌ Fehler beim Laden der Daten!";
@@ -169,8 +163,8 @@
     }
 
     function aktualisiereAnsicht() {
-      const meta = daten.meta;
-      const tides = daten.tides;
+      const meta = alleDaten[tagIndex].meta;
+      const tides = alleDaten[tagIndex].tides;
       const jetzt = new Date();
       const datumStr = jetzt.toLocaleDateString("de-DE", {
         weekday: "long", day: "numeric", month: "long", year: "numeric"
@@ -191,13 +185,17 @@
       });
 
       // Trend
-      const naechstes = findeNaechstes(tides, jetzt);
-      document.getElementById("trend").innerHTML =
-        naechstes.typ === "Hochwasser"
-          ? `Das Wasser steigt<br>(nächstes Hochwasser um ${naechstes.zeit})`
-          : `Das Wasser fällt<br>(nächstes Niedrigwasser um ${naechstes.zeit})`;
+      const naechstes = findeNaechstesEreignis(tides);
+      const trendEl = document.getElementById("trend");
+      if (naechstes.typ === "Hochwasser") {
+        trendEl.style.color = "green";
+        trendEl.innerHTML = `Das Wasser steigt<br>(nächstes Hochwasser um ${naechstes.zeit})`;
+      } else {
+        trendEl.style.color = "red";
+        trendEl.innerHTML = `Das Wasser fällt<br>(nächstes Niedrigwasser um ${naechstes.zeit})`;
+      }
 
-      // Footer (deutsches Format + WET)
+      // Footer
       const time = new Date(meta.generatedAt);
       const formatted = time.toLocaleString("de-DE", {
         timeZone: "Atlantic/Canary",
@@ -212,18 +210,26 @@
         `Quelle: tide-forecast.com (geparst) · Aktualisiert: ${formatted.replace(",", "")} WET`;
     }
 
-    function findeNaechstes(tides, jetzt) {
-      const jetztMin = jetzt.getHours() * 60 + jetzt.getMinutes();
-      for (const t of tides) {
-        const [h, m] = t.zeit.split(":").map(Number);
-        const min = h * 60 + m;
-        if (min > jetztMin) return t;
-      }
-      return tides[0];
+    // Findet das nächste Gezeitenereignis, auch über Mitternacht hinaus
+    function findeNaechstesEreignis(tides) {
+      const jetzt = new Date();
+      const heute = jetzt.toISOString().split("T")[0];
+
+      let ereignisse = [];
+      tides.forEach(eintrag => {
+        const [h, m] = eintrag.zeit.split(":").map(Number);
+        const t = new Date(`${heute}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
+        ereignisse.push({ ...eintrag, zeitpunkt: t });
+      });
+
+      // Falls alle Ereignisse vorbei sind -> erstes Ereignis von "morgen"
+      const zukunft = ereignisse.find(e => e.zeitpunkt > jetzt);
+      return zukunft || { ...ereignisse[0], zeitpunkt: new Date(jetzt.getTime() + 86400000) };
     }
 
-    function zeigeTag(t) {
-      alert("Später werden weitere Tage unterstützt. Aktuell nur heute verfügbar.");
+    function zeigeTag(index) {
+      tagIndex = index;
+      aktualisiereAnsicht();
     }
 
     ladeDaten();
