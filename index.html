@@ -25,9 +25,9 @@
       text-align: center;
     }
     h1 {
-      display: inline;
       font-size: 1.9rem;
       font-weight: 700;
+      margin-bottom: 0;
     }
     .subtitle {
       font-size: 1.1rem;
@@ -49,10 +49,15 @@
       padding: 0.4rem 1rem;
       margin: 0 0.2rem;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #e8e8e8;
     }
     button.active {
       background: #007bff;
       color: white;
+      border-color: #007bff;
     }
     table {
       width: 100%;
@@ -84,13 +89,14 @@
       h1 {
         display: block;
         font-size: 1.4rem;
+        margin-bottom: 0.2rem;
       }
       .subtitle {
         font-size: 1rem;
       }
       footer {
         font-size: 0.75rem;
-        line-height: 1.2;
+        line-height: 1.3;
       }
     }
   </style>
@@ -101,11 +107,7 @@
     <div id="date" class="subtitle"></div>
     <div id="status" class="status"></div>
 
-    <div class="buttons">
-      <button id="btn-today" class="active">Heute</button>
-      <button id="btn-tomorrow">Morgen</button>
-      <button id="btn-next">Übermorgen</button>
-    </div>
+    <div class="buttons" id="day-buttons"></div>
 
     <table>
       <thead>
@@ -122,40 +124,61 @@
   </div>
 
   <script>
-    const buttons = {
-      today: document.getElementById('btn-today'),
-      tomorrow: document.getElementById('btn-tomorrow'),
-      next: document.getElementById('btn-next'),
-    };
-    const tidesEl = document.getElementById('tides');
-    const dateEl = document.getElementById('date');
-    const statusEl = document.getElementById('status');
-    const footerEl = document.getElementById('footer');
+    const tidesEl = document.getElementById("tides");
+    const dateEl = document.getElementById("date");
+    const statusEl = document.getElementById("status");
+    const footerEl = document.getElementById("footer");
+    const buttonsContainer = document.getElementById("day-buttons");
 
     let data = null;
+    let currentIndex = 0;
 
     async function loadData() {
-      const url = `latest.json?nocache=${Date.now()}`; // Cache umgehen
-      const res = await fetch(url);
-      data = await res.json();
-      updateView(0);
+      try {
+        const res = await fetch(`latest.json?nocache=${Date.now()}`);
+        data = await res.json();
+
+        if (!data.days || !data.days.length) {
+          throw new Error("Keine Gezeiten-Daten gefunden!");
+        }
+
+        createButtons();
+        showDay(0); // Zeige standardmäßig den ersten (heutigen) Tag
+      } catch (err) {
+        console.error("Fehler beim Laden der Daten:", err);
+        tidesEl.innerHTML = `<tr><td colspan="3">❌ Fehler beim Laden der Daten</td></tr>`;
+      }
     }
 
-    function updateView(offset) {
-      const today = new Date();
-      const date = new Date(today);
-      date.setDate(today.getDate() + offset);
+    function createButtons() {
+      buttonsContainer.innerHTML = "";
+      data.days.forEach((day, i) => {
+        const date = new Date(day.date);
+        const label = i === 0 ? "Heute" : i === 1 ? "Morgen" : date.toLocaleDateString("de-DE", { weekday: "long" });
+        const btn = document.createElement("button");
+        btn.textContent = label;
+        btn.onclick = () => showDay(i);
+        if (i === 0) btn.classList.add("active");
+        buttonsContainer.appendChild(btn);
+      });
+    }
 
-      const dayISO = date.toISOString().split("T")[0];
-      const entry = data.days.find(d => d.date === dayISO);
+    function showDay(index) {
+      currentIndex = index;
+      const day = data.days[index];
+      const date = new Date(day.date);
 
-      if (!entry) {
-        tidesEl.innerHTML = `<tr><td colspan="3">Keine Daten für diesen Tag</td></tr>`;
-        return;
-      }
+      // Datum anzeigen
+      const dateFmt = date.toLocaleDateString("de-DE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+      dateEl.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
 
-      const tides = entry.tides;
-      tidesEl.innerHTML = tides.map(t => `
+      // Tabelle befüllen
+      tidesEl.innerHTML = day.tides.map(t => `
         <tr>
           <td>${t.zeit}</td>
           <td class="${t.typ === "Hochwasser" ? "hoch" : "niedrig"}">${t.typ}</td>
@@ -163,21 +186,14 @@
         </tr>
       `).join("");
 
-      const dateFmt = date.toLocaleDateString("de-DE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-
-      dateEl.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
-
+      // Status (Trend)
       const now = new Date();
-      const [next, nextType] = getNextTide(tides, now);
+      const [nextTime, nextType] = getNextTide(day.tides, now);
       const trend = nextType === "Hochwasser" ? "Das Wasser steigt 🌊" : "Das Wasser fällt ⬇️";
       const color = nextType === "Hochwasser" ? "#007b00" : "#cc0000";
-      statusEl.innerHTML = `<span style="color:${color}">${trend}<br>(nächstes ${nextType} um ${next})</span>`;
+      statusEl.innerHTML = `<span style="color:${color}">${trend}<br>(nächstes ${nextType} um ${nextTime})</span>`;
 
+      // Footer (Zeitstempel)
       const gen = new Date(data.meta.generatedAt);
       const genFmt = gen.toLocaleString("de-DE", {
         day: "2-digit",
@@ -185,12 +201,14 @@
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-        timeZone: "Atlantic/Canary",
+        timeZone: data.meta.timezone,
       });
       footerEl.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${genFmt} WET`;
 
-      Object.values(buttons).forEach(b => b.classList.remove("active"));
-      [buttons.today, buttons.tomorrow, buttons.next][offset].classList.add("active");
+      // Aktive Schaltfläche markieren
+      [...buttonsContainer.children].forEach((b, i) =>
+        b.classList.toggle("active", i === index)
+      );
     }
 
     function getNextTide(tides, now) {
@@ -202,10 +220,6 @@
       }
       return [tides[0].zeit, tides[0].typ];
     }
-
-    buttons.today.onclick = () => updateView(0);
-    buttons.tomorrow.onclick = () => updateView(1);
-    buttons.next.onclick = () => updateView(2);
 
     loadData();
   </script>
