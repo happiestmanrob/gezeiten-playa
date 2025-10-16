@@ -40,14 +40,14 @@
       font-weight: 500;
     }
     .buttons {
-      margin-bottom: 1rem;
+      margin-bottom: 0.8rem;
     }
     button {
       background: #f0f0f0;
       border: 1px solid #ccc;
       border-radius: 6px;
       padding: 0.4rem 1rem;
-      margin: 0 0.2rem;
+      margin: 0.2rem;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -58,6 +58,13 @@
       background: #007bff;
       color: white;
       border-color: #007bff;
+    }
+    select {
+      margin-top: 0.4rem;
+      padding: 0.4rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
     }
     table {
       width: 100%;
@@ -108,6 +115,7 @@
     <div id="status" class="status"></div>
 
     <div class="buttons" id="day-buttons"></div>
+    <select id="day-select"></select>
 
     <table>
       <thead>
@@ -129,6 +137,7 @@
     const statusEl = document.getElementById("status");
     const footerEl = document.getElementById("footer");
     const buttonsContainer = document.getElementById("day-buttons");
+    const selectEl = document.getElementById("day-select");
 
     let data = null;
     let currentIndex = 0;
@@ -138,28 +147,40 @@
         const res = await fetch(`latest.json?nocache=${Date.now()}`);
         data = await res.json();
 
-        if (!data.days || !data.days.length) {
-          throw new Error("Keine Gezeiten-Daten gefunden!");
-        }
+        if (!data.days || !data.days.length) throw new Error("Keine Gezeiten-Daten gefunden!");
 
         createButtons();
-        showDay(0); // Zeige standardmäßig den ersten (heutigen) Tag
+        createDropdown();
+        showDay(0);
       } catch (err) {
-        console.error("Fehler beim Laden der Daten:", err);
+        console.error("Fehler beim Laden:", err);
         tidesEl.innerHTML = `<tr><td colspan="3">❌ Fehler beim Laden der Daten</td></tr>`;
       }
     }
 
     function createButtons() {
       buttonsContainer.innerHTML = "";
-      data.days.forEach((day, i) => {
-        const date = new Date(day.date);
-        const label = i === 0 ? "Heute" : i === 1 ? "Morgen" : date.toLocaleDateString("de-DE", { weekday: "long" });
+      const labels = ["Heute", "Morgen", "Übermorgen"];
+      for (let i = 0; i < Math.min(3, data.days.length); i++) {
         const btn = document.createElement("button");
-        btn.textContent = label;
+        btn.textContent = labels[i];
         btn.onclick = () => showDay(i);
         if (i === 0) btn.classList.add("active");
         buttonsContainer.appendChild(btn);
+      }
+    }
+
+    function createDropdown() {
+      selectEl.innerHTML = "";
+      selectEl.onchange = (e) => showDay(parseInt(e.target.value));
+
+      data.days.forEach((day, i) => {
+        const d = new Date(day.date);
+        const formatted = d.toLocaleDateString("de-DE");
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = formatted;
+        selectEl.appendChild(option);
       });
     }
 
@@ -177,7 +198,7 @@
       });
       dateEl.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
 
-      // Tabelle befüllen
+      // Tabelle füllen (4 Gezeiten, nicht 3)
       tidesEl.innerHTML = day.tides.map(t => `
         <tr>
           <td>${t.zeit}</td>
@@ -186,14 +207,14 @@
         </tr>
       `).join("");
 
-      // Status (Trend)
+      // Trend / Status anzeigen
       const now = new Date();
       const [nextTime, nextType] = getNextTide(day.tides, now);
       const trend = nextType === "Hochwasser" ? "Das Wasser steigt 🌊" : "Das Wasser fällt ⬇️";
       const color = nextType === "Hochwasser" ? "#007b00" : "#cc0000";
       statusEl.innerHTML = `<span style="color:${color}">${trend}<br>(nächstes ${nextType} um ${nextTime})</span>`;
 
-      // Footer (Zeitstempel)
+      // Aktualisierung anzeigen
       const gen = new Date(data.meta.generatedAt);
       const genFmt = gen.toLocaleString("de-DE", {
         day: "2-digit",
@@ -205,10 +226,9 @@
       });
       footerEl.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${genFmt} WET`;
 
-      // Aktive Schaltfläche markieren
-      [...buttonsContainer.children].forEach((b, i) =>
-        b.classList.toggle("active", i === index)
-      );
+      // Buttons & Dropdown synchronisieren
+      [...buttonsContainer.children].forEach((b, i) => b.classList.toggle("active", i === index));
+      selectEl.value = index;
     }
 
     function getNextTide(tides, now) {
