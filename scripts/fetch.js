@@ -171,11 +171,17 @@ if (tidesWithIso.length >= 2) {
 };
 
 
-  // Schreiben
-  const outDir = path.join(process.cwd(), "public");
+  // Schreiben ins Frontend-Verzeichnis
+  const outDir = path.join(process.cwd(), "frontend");
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, "latest.json"), JSON.stringify(out, null, 2));
+
+  const outputPath = path.join(outDir, "data.json");
+  fs.writeFileSync(outputPath, JSON.stringify(out, null, 2));
+  
   console.log("✅ Gezeiten aktualisiert:", trend, "—", tidesWithIso.length, "Einträge");
+
+
+  
 })().catch(err => {
   console.error("❌ Fetch failed:", err);
   process.exit(1);
