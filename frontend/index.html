@@ -7,264 +7,192 @@
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: linear-gradient(to bottom right, #dff3ff, #e8f7ff);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
+      background: #e8f5ff;
       margin: 0;
-      padding: 2rem;
+      padding: 1rem;
+      text-align: center;
     }
-    .card {
+    main {
       background: white;
-      border-radius: 1.5rem;
+      border-radius: 20px;
+      padding: 1.5rem;
+      max-width: 420px;
+      margin: auto;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      padding: 2rem;
-      max-width: 600px;
-      width: 100%;
-      text-align: center;
     }
-h1 {
-  font-size: 1.9rem;
-  font-weight: 700;
-  margin-bottom: 0;
-  line-height: 1.2;
-  white-space: nowrap; /* Verhindert den Zeilenumbruch */
-}
-
-@media (max-width: 600px) {
-  h1 {
-    font-size: 1.35rem; /* etwas kleiner, damit alles in eine Zeile passt */
-    white-space: nowrap; /* bleibt in einer Zeile */
-  }
-}
-
-    .subtitle {
-      font-size: 1.1rem;
-      margin-top: 0.3rem;
-      color: #333;
-    }
-    .arrow-line {
-      font-size: 2rem;
-      margin: 0.3rem 0 0.6rem 0;
-    }
-    .status {
-      margin: 0.4rem 0 1rem 0;
-      font-size: 1.2rem;
-      font-weight: 500;
-    }
-    .buttons {
-      margin-bottom: 0.8rem;
-    }
-    button {
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 0.4rem 1rem;
-      margin: 0.2rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    button:hover {
-      background: #e8e8e8;
-    }
-    button.active {
-      background: #007bff;
-      color: white;
-      border-color: #007bff;
-    }
-    select {
-      margin-top: 0.4rem;
-      padding: 0.4rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 0.6rem;
-      border-bottom: 1px solid #eee;
-      text-align: center;
-    }
-    th {
-      color: #444;
-      font-weight: 600;
-    }
-    .hoch {
-      color: #007b00;
-      font-weight: 600;
-    }
-    .niedrig {
-      color: #cc0000;
-      font-weight: 600;
-    }
-    footer {
-      margin-top: 1.2rem;
-      font-size: 0.8rem;
-      color: #777;
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      line-height: 1.2;
+      white-space: nowrap;
     }
     @media (max-width: 600px) {
       h1 {
-        font-size: 1.5rem;
-        line-height: 1.1;
-      }
-      .subtitle {
-        font-size: 1rem;
-      }
-      .arrow-line {
-        font-size: 1.8rem;
-        margin-top: 0.3rem;
-      }
-      footer {
-        font-size: 0.7rem;
-        line-height: 1;
+        font-size: 1.35rem;
         white-space: nowrap;
       }
+      footer {
+        font-size: 0.65rem;
+      }
+    }
+    .trend {
+      font-size: 1.5rem;
+      margin: 0.2rem 0;
+    }
+    .falling { color: #d00; }
+    .rising { color: #008000; }
+
+    .days {
+      margin: 0.6rem 0;
+    }
+    .days button {
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      background: #f5f5f5;
+      margin: 2px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .days button.active {
+      background: #0078ff;
+      color: white;
+    }
+    .dropdown {
+      margin-top: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.8rem;
+      text-align: center;
+    }
+    th, td {
+      padding: 0.5rem;
+    }
+    tr:not(:last-child) td {
+      border-bottom: 1px solid #eee;
+    }
+    .low { color: red; }
+    .high { color: green; }
+
+    footer {
+      font-size: 0.75rem;
+      color: #777;
+      margin-top: 1rem;
+    }
+    .sunmoon {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .sunmoon div {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .spring {
+      color: #0057ff;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <div class="card">
+  <main>
     <h1>🌊 Gezeiten · Playa del Inglés</h1>
-    <div id="date" class="subtitle"></div>
-    <div id="arrow" class="arrow-line"></div>
-    <div id="status" class="status"></div>
-
-    <div class="buttons" id="day-buttons"></div>
-    <select id="day-select"></select>
-
-    <table>
+    <p id="date"></p>
+    <div id="trend" class="trend"></div>
+    <div class="days">
+      <button id="todayBtn">Heute</button>
+      <button id="tomorrowBtn">Morgen</button>
+      <button id="dayAfterBtn">Übermorgen</button>
+    </div>
+    <div class="dropdown">
+      <select id="daySelect"></select>
+    </div>
+    <table id="tides">
       <thead>
-        <tr>
-          <th>Zeit</th>
-          <th>Typ</th>
-          <th>Höhe (m)</th>
-        </tr>
+        <tr><th>Zeit</th><th>Typ</th><th>Höhe (m)</th></tr>
       </thead>
-      <tbody id="tides"></tbody>
+      <tbody></tbody>
     </table>
 
+    <div id="sunmoon" class="sunmoon"></div>
     <footer id="footer"></footer>
-  </div>
+  </main>
 
   <script>
-    const tidesEl = document.getElementById("tides");
-    const dateEl = document.getElementById("date");
-    const arrowEl = document.getElementById("arrow");
-    const statusEl = document.getElementById("status");
-    const footerEl = document.getElementById("footer");
-    const buttonsContainer = document.getElementById("day-buttons");
-    const selectEl = document.getElementById("day-select");
+    async function loadTides() {
+      const res = await fetch("latest.json");
+      const data = await res.json();
+      const days = data.days;
 
-    let data = null;
-    let currentIndex = 0;
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
 
-    async function loadData() {
-      try {
-        const res = await fetch(`latest.json?nocache=${Date.now()}`);
-        data = await res.json();
+      const dateEl = document.getElementById("date");
+      const trendEl = document.getElementById("trend");
+      const tbody = document.querySelector("#tides tbody");
+      const footer = document.getElementById("footer");
+      const select = document.getElementById("daySelect");
+      const sunmoonEl = document.getElementById("sunmoon");
 
-        if (!data.days || !data.days.length) throw new Error("Keine Gezeiten-Daten gefunden!");
-
-        createButtons();
-        createDropdown();
-        showDay(0);
-      } catch (err) {
-        console.error("Fehler beim Laden:", err);
-        tidesEl.innerHTML = `<tr><td colspan="3">❌ Fehler beim Laden der Daten</td></tr>`;
-      }
-    }
-
-    function createButtons() {
-      buttonsContainer.innerHTML = "";
-      const labels = ["Heute", "Morgen", "Übermorgen"];
-      for (let i = 0; i < Math.min(3, data.days.length); i++) {
-        const btn = document.createElement("button");
-        btn.textContent = labels[i];
-        btn.onclick = () => showDay(i);
-        if (i === 0) btn.classList.add("active");
-        buttonsContainer.appendChild(btn);
-      }
-    }
-
-    function createDropdown() {
-      selectEl.innerHTML = "";
-      selectEl.onchange = (e) => showDay(parseInt(e.target.value));
-      data.days.forEach((day, i) => {
-        const d = new Date(day.date);
-        const formatted = d.toLocaleDateString("de-DE");
+      days.forEach((d, i) => {
+        const dateObj = new Date(d.date.replace(/[^0-9\-]/g, ""));
         const option = document.createElement("option");
         option.value = i;
-        option.textContent = formatted;
-        selectEl.appendChild(option);
+        option.textContent = dateObj.toLocaleDateString("de-DE");
+        if (d.springTide) {
+          option.style.color = d.moonPhase.includes("Full") ? "blue" : "deepskyblue";
+        }
+        select.appendChild(option);
       });
-    }
 
-    function showDay(index) {
-      currentIndex = index;
-      const day = data.days[index];
-      const date = new Date(day.date);
+      function render(dayIndex) {
+        const d = days[dayIndex];
+        dateEl.textContent = d.date;
+        tbody.innerHTML = "";
+        d.entries.forEach(e => {
+          const tr = document.createElement("tr");
+          const cls = e.type.toLowerCase().includes("low") ? "low" : "high";
+          tr.innerHTML = `<td>${e.time}</td><td class="${cls}">${e.type}</td><td>${e.height}</td>`;
+          tbody.appendChild(tr);
+        });
 
-      // Datum
-      const dateFmt = date.toLocaleDateString("de-DE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      });
-      dateEl.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
+        // Trend bestimmen
+        const nextLow = d.entries.find(e => e.type.toLowerCase().includes("low"));
+        const nextHigh = d.entries.find(e => e.type.toLowerCase().includes("high"));
+        if (nextLow && nextHigh) {
+          trendEl.innerHTML = d.entries[0].type.toLowerCase().includes("low")
+            ? '<div class="falling">⬇️</div><div class="falling">Das Wasser fällt<br>(nächstes Niedrigwasser um ' + nextLow.time + ')</div>'
+            : '<div class="rising">⬆️</div><div class="rising">Das Wasser steigt<br>(nächstes Hochwasser um ' + nextHigh.time + ')</div>';
+        }
 
-      // Tabelle (zentriert)
-      tidesEl.innerHTML = day.tides.map(t => `
-        <tr>
-          <td>${t.zeit}</td>
-          <td class="${t.typ === "Hochwasser" ? "hoch" : "niedrig"}">${t.typ}</td>
-          <td>${t.hoehe_m.toFixed(2)}</td>
-        </tr>
-      `).join("");
+        // Sonne & Mond
+        sunmoonEl.innerHTML = `
+          <div>🌅 <strong>Auf:</strong> ${d.sunrise || "–"}</div>
+          <div>🌇 <strong>Unter:</strong> ${d.sunset || "–"}</div>
+          <div>🌙 <strong>Auf:</strong> ${d.moonrise || "–"}</div>
+          <div>🌘 <strong>Unter:</strong> ${d.moonset || "–"}</div>
+          <div>${d.moonPhase ? "🌔 " + d.moonPhase : ""}${d.springTide ? ' <span class="spring">(Springflut)</span>' : ""}</div>
+        `;
 
-      // Trend & Pfeil
-      const now = new Date();
-      const [nextTime, nextType] = getNextTide(day.tides, now);
-      const trendText = nextType === "Hochwasser" ? "Das Wasser steigt" : "Das Wasser fällt";
-      const arrow = nextType === "Hochwasser" ? "🌊" : "⬇️";
-      const color = nextType === "Hochwasser" ? "#007b00" : "#cc0000";
-
-      arrowEl.innerHTML = `<span style="color:${color}">${arrow}</span>`;
-      statusEl.innerHTML = `<span style="color:${color}">${trendText}<br>(nächstes ${nextType} um ${nextTime})</span>`;
-
-      // Footer
-      const gen = new Date(data.meta.generatedAt);
-      const genFmt = gen.toLocaleString("de-DE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: data.meta.timezone,
-      });
-      footerEl.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${genFmt} WET`;
-
-      // Buttons & Dropdown sync
-      [...buttonsContainer.children].forEach((b, i) => b.classList.toggle("active", i === index));
-      selectEl.value = index;
-    }
-
-    function getNextTide(tides, now) {
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      for (const t of tides) {
-        const [h, m] = t.zeit.split(":").map(Number);
-        const mins = h * 60 + m;
-        if (mins > nowMinutes) return [t.zeit, t.typ];
+        footer.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${new Date(data.updated).toLocaleString("de-DE", { timeZone: "Atlantic/Canary" })}`;
       }
-      return [tides[0].zeit, tides[0].typ];
+
+      select.addEventListener("change", e => render(e.target.value));
+      document.getElementById("todayBtn").onclick = () => render(0);
+      document.getElementById("tomorrowBtn").onclick = () => render(1);
+      document.getElementById("dayAfterBtn").onclick = () => render(2);
+
+      render(0);
     }
 
-    loadData();
+    loadTides();
   </script>
 </body>
 </html>
