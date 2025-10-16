@@ -1,34 +1,22 @@
-{
-  "meta": {
-    "location": "Playa del Inglés",
-    "timezone": "Atlantic/Canary",
-    "generatedAt": "2025-10-16T20:16:49.640Z",
-    "source": "tide-forecast.com (parsed)"
+[
+  {
+    "zeit": "04:27",
+    "typ": "Niedrigwasser",
+    "hoehe_m": 2.1
   },
-  "tides": [
-    {
-      "timeStr": "04:27",
-      "type": "Low",
-      "height": 0.64,
-      "iso": "2025-10-16T04:27:00.000Z"
-    },
-    {
-      "timeStr": "10:39",
-      "type": "High",
-      "height": 1.68,
-      "iso": "2025-10-16T10:39:00.000Z"
-    },
-    {
-      "timeStr": "17:14",
-      "type": "Low",
-      "height": 0.4,
-      "iso": "2025-10-16T17:14:00.000Z"
-    },
-    {
-      "timeStr": "23:23",
-      "type": "High",
-      "height": 1.57,
-      "iso": "2025-10-16T23:23:00.000Z"
-    }
-  ]
-}
+  {
+    "zeit": "10:39",
+    "typ": "Hochwasser",
+    "hoehe_m": 5.51
+  },
+  {
+    "zeit": "17:14",
+    "typ": "Niedrigwasser",
+    "hoehe_m": 1.31
+  },
+  {
+    "zeit": "23:23",
+    "typ": "Hochwasser",
+    "hoehe_m": 5.15
+  }
+]
