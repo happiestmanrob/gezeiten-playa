@@ -72,9 +72,15 @@
       padding: 0.4rem 1rem;
       margin: 0.2rem;
       cursor: pointer;
+      transition: 0.2s;
     }
     button:hover {
       background: #e9f6ff;
+    }
+    button.active {
+      background: #0078d4;
+      color: white;
+      border-color: #0078d4;
     }
 
     /* --- MOBILE ANSICHT --- */
@@ -115,6 +121,7 @@
 </head>
 <body>
   <div class="card">
+    <!-- Überschrift -->
     <div id="headline">
       <span class="headline-mobile">Gezeiten</span>
       <h1 class="headline-desktop">🌊 Gezeiten · Playa del Inglés</h1>
@@ -125,9 +132,9 @@
     <div class="trend" id="trend">Lade Daten...</div>
 
     <div>
-      <button onclick="zeigeTag(0)">Heute</button>
-      <button onclick="zeigeTag(1)">Morgen</button>
-      <button onclick="zeigeTag(2)">Übermorgen</button>
+      <button id="btn0" onclick="zeigeTag(0)">Heute</button>
+      <button id="btn1" onclick="zeigeTag(1)">Morgen</button>
+      <button id="btn2" onclick="zeigeTag(2)">Übermorgen</button>
     </div>
 
     <table>
@@ -145,33 +152,36 @@
   </div>
 
   <script>
-    let alleDaten = {};
+    let daten = null;
     let tagIndex = 0;
 
     async function ladeDaten() {
       try {
         const res = await fetch("latest.json?_=" + Date.now());
-        const daten = await res.json();
-
-        // Simulation: wir nehmen die nächsten 3 Tage an, hier nur denselben Tag mehrfach
-        alleDaten = [daten, daten, daten]; 
+        daten = await res.json();
         aktualisiereAnsicht();
       } catch (err) {
-        document.getElementById("trend").textContent = "❌ Fehler beim Laden der Daten!";
+        document.getElementById("trend").textContent = "❌ Fehler beim Laden!";
         console.error(err);
       }
     }
 
     function aktualisiereAnsicht() {
-      const meta = alleDaten[tagIndex].meta;
-      const tides = alleDaten[tagIndex].tides;
-      const jetzt = new Date();
-      const datumStr = jetzt.toLocaleDateString("de-DE", {
+      const tag = daten.days[tagIndex];
+      const meta = daten.meta;
+      const tides = tag.tides;
+      const datumStr = new Date(tag.date).toLocaleDateString("de-DE", {
         weekday: "long", day: "numeric", month: "long", year: "numeric"
       });
+
       document.getElementById("datum").textContent = datumStr;
 
-      // Tabelle füllen
+      // Buttons visuell markieren
+      for (let i = 0; i < 3; i++) {
+        document.getElementById("btn" + i).classList.toggle("active", i === tagIndex);
+      }
+
+      // Tabelle
       const tabelle = document.getElementById("tabelle");
       tabelle.innerHTML = "";
       tides.forEach(eintrag => {
@@ -184,9 +194,11 @@
         tabelle.appendChild(tr);
       });
 
-      // Trend
-      const naechstes = findeNaechstesEreignis(tides);
+      // Trend (aktueller Tag + Uhrzeit berücksichtigen)
+      const jetzt = new Date();
+      const naechstes = findeNaechstes(tides, tag.date, jetzt);
       const trendEl = document.getElementById("trend");
+
       if (naechstes.typ === "Hochwasser") {
         trendEl.style.color = "green";
         trendEl.innerHTML = `Das Wasser steigt<br>(nächstes Hochwasser um ${naechstes.zeit})`;
@@ -195,7 +207,7 @@
         trendEl.innerHTML = `Das Wasser fällt<br>(nächstes Niedrigwasser um ${naechstes.zeit})`;
       }
 
-      // Footer
+      // Footer (Zeitumrechnung)
       const time = new Date(meta.generatedAt);
       const formatted = time.toLocaleString("de-DE", {
         timeZone: "Atlantic/Canary",
@@ -210,21 +222,27 @@
         `Quelle: tide-forecast.com (geparst) · Aktualisiert: ${formatted.replace(",", "")} WET`;
     }
 
-    // Findet das nächste Gezeitenereignis, auch über Mitternacht hinaus
-    function findeNaechstesEreignis(tides) {
-      const jetzt = new Date();
-      const heute = jetzt.toISOString().split("T")[0];
+    // Nächstes Ereignis finden – auch über Mitternacht
+    function findeNaechstes(tides, tagDatum, jetzt) {
+      const jetztDatum = new Date(jetzt).toISOString().split("T")[0];
 
       let ereignisse = [];
       tides.forEach(eintrag => {
         const [h, m] = eintrag.zeit.split(":").map(Number);
-        const t = new Date(`${heute}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
+        const t = new Date(`${tagDatum}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`);
         ereignisse.push({ ...eintrag, zeitpunkt: t });
       });
 
-      // Falls alle Ereignisse vorbei sind -> erstes Ereignis von "morgen"
       const zukunft = ereignisse.find(e => e.zeitpunkt > jetzt);
-      return zukunft || { ...ereignisse[0], zeitpunkt: new Date(jetzt.getTime() + 86400000) };
+      if (zukunft) return zukunft;
+
+      // Wenn der Tag vorbei ist → erstes Ereignis von morgen (falls vorhanden)
+      const nextDay = daten.days[tagIndex + 1];
+      if (nextDay && nextDay.tides.length > 0) {
+        return nextDay.tides[0];
+      }
+      // Fallback
+      return ereignisse[0];
     }
 
     function zeigeTag(index) {
