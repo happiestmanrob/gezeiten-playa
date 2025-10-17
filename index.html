@@ -17,7 +17,7 @@
 
     .card {
       background: white;
-      padding: 1.8rem 2rem;
+      padding: 1.4rem 2rem;
       border-radius: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       max-width: 600px;
@@ -27,7 +27,7 @@
 
     h1 {
       font-size: 1.8rem;
-      margin: 0.2rem 0 0.3rem 0;
+      margin: 0.1rem 0 0.3rem 0; /* Weniger Lücke oben */
     }
 
     h2 {
@@ -169,20 +169,28 @@
           throw new Error("Keine Daten gefunden.");
 
         window.tideData = data.days;
+
+        const todayIndex = findTodayIndex(data.days);
         populateDateSelect(data.days);
-        showDay(0);
+        showDay(todayIndex);
       } catch (err) {
         document.getElementById("tide-table").innerHTML =
           `<tr><td colspan="3" class="error">❌ ${err.message}</td></tr>`;
       }
     }
 
+    function findTodayIndex(days) {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const index = days.findIndex((d) => d.date === todayStr);
+      return index >= 0 ? index : 0; // fallback auf 0
+    }
+
     function populateDateSelect(days) {
       const select = document.getElementById("date-select");
       select.innerHTML = "";
       days.forEach((d) => {
-        const option = document.createElement("option");
         const dateObj = new Date(d.date);
+        const option = document.createElement("option");
         option.value = d.date;
         option.textContent = dateObj.toLocaleDateString("de-DE", {
           weekday: "long",
@@ -219,9 +227,9 @@
         const tr = document.createElement("tr");
         const cls = t.typ === "Niedrigwasser" ? "low" : "high";
         tr.classList.add(cls);
-        const timeFormatted = formatTime(t.zeit);
+        const formatted = formatTime(t.zeit);
         tr.innerHTML = `
-          <td>${timeFormatted}</td>
+          <td>${formatted}</td>
           <td>${t.typ}</td>
           <td>${t.hoehe_m?.toFixed(2) ?? "-"}</td>
         `;
@@ -232,9 +240,9 @@
     }
 
     function updateButtons() {
-      document.getElementById("btn-today").classList.toggle("active", activeIndex === 0);
-      document.getElementById("btn-tomorrow").classList.toggle("active", activeIndex === 1);
-      document.getElementById("btn-after").classList.toggle("active", activeIndex === 2);
+      document.getElementById("btn-today").classList.toggle("active", activeIndex === findTodayIndex(window.tideData));
+      document.getElementById("btn-tomorrow").classList.toggle("active", activeIndex === findTodayIndex(window.tideData) + 1);
+      document.getElementById("btn-after").classList.toggle("active", activeIndex === findTodayIndex(window.tideData) + 2);
     }
 
     function updateStatus(day) {
@@ -272,14 +280,15 @@
       footer.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${updated} WET`;
     }
 
+    // 🕒 24-Stunden-Format mit führender Null
     function formatTime(timeStr) {
       const [h, m] = timeStr.split(":").map(Number);
       return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
     }
 
-    document.getElementById("btn-today").onclick = () => showDay(0);
-    document.getElementById("btn-tomorrow").onclick = () => showDay(1);
-    document.getElementById("btn-after").onclick = () => showDay(2);
+    document.getElementById("btn-today").onclick = () => showDay(findTodayIndex(window.tideData));
+    document.getElementById("btn-tomorrow").onclick = () => showDay(findTodayIndex(window.tideData) + 1);
+    document.getElementById("btn-after").onclick = () => showDay(findTodayIndex(window.tideData) + 2);
 
     loadTideData();
   </script>
