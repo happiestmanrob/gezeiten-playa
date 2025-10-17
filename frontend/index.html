@@ -1,147 +1,243 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gezeiten · Playa del Inglés</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { background-color: #eaf6ff; }
-    .card { background: white; border-radius: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .btn.active { background: #2563eb; color: white; }
+    :root{
+      --bg:#eaf6ff;
+      --card:#fff;
+      --text:#111;
+      --muted:#667085;
+      --green:#16a34a;
+      --red:#dc2626;
+      --blue:#2563eb;
+      --pill:#eef2ff;
+      --shadow: 0 10px 30px rgba(2,6,23,.08);
+      --radius:20px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 500px at 50% -100px, #dff2ff 0, transparent 70%), var(--bg);
+    }
+    .wrap{max-width:900px;margin:48px auto;padding:0 16px}
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px 28px 22px;
+    }
+    .title{
+      display:flex;align-items:center;justify-content:center;gap:14px;
+      font-size:clamp(24px,3.6vw,40px);font-weight:800;letter-spacing:.2px
+    }
+    .logo{width:38px;height:38px}
+    .date{
+      text-align:center;margin:6px 0 8px;color:var(--muted);font-weight:600
+    }
+    .trendIcon{font-size:32px; text-align:center; margin-top:6px}
+    .trend{
+      text-align:center;font-weight:700;margin:6px 0;color:var(--green)
+    }
+    .trend.down{color:var(--red)}
+    .sub{ text-align:center; color:var(--muted); margin-top:4px}
+    .controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 10px}
+    .btn{
+      padding:10px 16px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;
+      font-weight:600;cursor:pointer
+    }
+    .btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .sel{padding:9px 12px;border-radius:12px;border:1px solid #e5e7eb;background:#fff}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:14px 10px;text-align:center}
+    th{color:var(--muted);font-weight:700;letter-spacing:.3px}
+    tr+tr td{border-top:1px solid #eee}
+    .type-high{color:var(--green);font-weight:700}
+    .type-low{color:var(--red);font-weight:700}
+    .footer{margin-top:16px;text-align:center;color:var(--muted);font-size:13px}
+    @media (max-width:480px){
+      .title{font-size:26px}
+      .footer{font-size:12px}
+    }
   </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-  <div class="card p-6 max-w-md w-full text-center">
-    <h1 class="text-3xl font-bold mb-1">🌊 Gezeiten · Playa del Inglés</h1>
-    <p id="date" class="text-gray-600 mb-3"></p>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="title">
+        <img class="logo" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f30a.svg" alt="">
+        <div>Gezeiten · Playa del Inglés</div>
+      </div>
 
-    <!-- Trend -->
-    <div id="arrow" class="text-3xl mb-1"></div>
-    <div id="trend" class="font-semibold mb-2"></div>
-    <p id="next-tide" class="text-gray-800 mb-4 text-sm"></p>
+      <div id="humanDate" class="date">–</div>
 
-    <div class="flex justify-center gap-2 mb-4">
-      <button id="btn-heute" class="btn px-4 py-2 rounded-lg border">Heute</button>
-      <button id="btn-morgen" class="btn px-4 py-2 rounded-lg border">Morgen</button>
-      <button id="btn-uebermorgen" class="btn px-4 py-2 rounded-lg border">Übermorgen</button>
+      <div class="trendIcon" id="trendIcon">⬆️</div>
+      <div id="trendText" class="trend">Das Wasser steigt</div>
+      <div id="nextInfo" class="sub">(nächstes Hochwasser um –:–)</div>
+
+      <div class="controls">
+        <button class="btn" id="btnToday">Heute</button>
+        <button class="btn" id="btnTomorrow">Morgen</button>
+        <button class="btn" id="btnDayAfter">Übermorgen</button>
+        <select id="dateSelect" class="sel" aria-label="Datum auswählen"></select>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Zeit</th><th>Typ</th><th>Höhe (m)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="3" class="sub">Lade Daten …</td></tr>
+        </tbody>
+      </table>
+
+      <div class="footer" id="foot">Quelle: tide-forecast.com · WET</div>
     </div>
-
-    <table class="w-full text-sm text-center">
-      <thead>
-        <tr class="font-semibold">
-          <th class="text-center">Zeit</th>
-          <th class="text-center">Typ</th>
-          <th class="text-center">Höhe (m)</th>
-        </tr>
-      </thead>
-      <tbody id="tides"></tbody>
-    </table>
-
-    <p id="source" class="text-xs text-gray-500 mt-4">Quelle: tide-forecast.com · <span id="updated"></span> WET</p>
   </div>
 
   <script>
-    const CANARY_TZ = "Atlantic/Canary";
+    const DATA_URL = "./data/latest.json"; // liegt in /public/data
 
-    function nowCanary() {
-      return new Date(new Date().toLocaleString("en-US", { timeZone: CANARY_TZ }));
+    const fmtDE = new Intl.DateTimeFormat("de-DE", { dateStyle: "full", timeZone: "Atlantic/Canary" });
+    const fmtISO = (d) => d.toISOString().slice(0,10);
+
+    let DAYS = [];
+    let UPDATED = "";
+    let tz = "WET";
+
+    // UI
+    const tbody = document.getElementById("tbody");
+    const sel = document.getElementById("dateSelect");
+    const humanDate = document.getElementById("humanDate");
+    const trendIcon = document.getElementById("trendIcon");
+    const trendText = document.getElementById("trendText");
+    const nextInfo = document.getElementById("nextInfo");
+    const foot = document.getElementById("foot");
+
+    const btnToday = document.getElementById("btnToday");
+    const btnTomorrow = document.getElementById("btnTomorrow");
+    const btnDayAfter = document.getElementById("btnDayAfter");
+
+    function setActive(btn){
+      [btnToday, btnTomorrow, btnDayAfter].forEach(b=>b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
     }
 
-    function ymdKey(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const da = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${da}`;
-    }
+    function renderDay(iso){
+      const day = DAYS.find(d => d.date === iso);
+      if(!day){ tbody.innerHTML = `<tr><td colspan="3" class="sub">Keine Daten.</td></tr>`; return; }
 
-    function findTodayIndex(days) {
-      const todayKey = ymdKey(nowCanary());
-      return days.findIndex(d => d.date.includes(todayKey));
-    }
-
-    function renderDay(day) {
-      document.getElementById("date").textContent = day.date;
-
-      const tbody = document.getElementById("tides");
-      tbody.innerHTML = "";
+      // Datum oben
+      const [y,m,dd] = iso.split("-");
+      humanDate.textContent = fmtDE.format(new Date(`${iso}T12:00:00Z`));
 
       // Tabelle
-      day.entries.forEach(e => {
-        const tr = document.createElement("tr");
-        const color = e.type.toLowerCase().includes("high") ? "text-green-600" : "text-red-600";
-        const typeText = e.type.toLowerCase().includes("high") ? "Hochwasser" : "Niedrigwasser";
-        tr.innerHTML = `
+      tbody.innerHTML = day.entries.map(e => {
+        const typeClass = e.type === "Hochwasser" ? "type-high" : "type-low";
+        const height = (e.height_m ?? "").toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        return `<tr>
           <td>${e.time}</td>
-          <td class="${color}">${typeText}</td>
-          <td>${e.height.toFixed(2)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+          <td class="${typeClass}">${e.type}</td>
+          <td>${height}</td>
+        </tr>`;
+      }).join("");
 
-      // Trend berechnen
-      const now = nowCanary();
-      const allTimes = day.entries.map(e => e.time);
-      const nextTide = allTimes.find(t => {
-        const [h, m] = t.split(":");
-        const tideTime = new Date(now);
-        tideTime.setHours(h, m, 0, 0);
-        return tideTime > now;
-      });
+      // Trend + nächstes Ereignis (nur sinnvoll für Heute)
+      const nowIso = nowIsoInCanary();
+      if (iso === nowIso) {
+        const nowHM = curTimeHM();
+        // nächstes Ereignis heute
+        const next = day.entries.find(e => e.time >= nowHM) || null;
+        let rising = true; // default
+        if (next) rising = next.type === "Hochwasser";
+        trendIcon.textContent = rising ? "⬆️" : "⬇️";
+        trendText.textContent = rising ? "Das Wasser steigt" : "Das Wasser fällt";
+        nextInfo.textContent = next ? `(nächstes ${next.type} um ${next.time})` : "(für heute kein weiteres Ereignis)";
+        trendText.classList.toggle("down", !rising);
+      } else {
+        // Für andere Tage: Richtung aus erstem Ereignis ableiten
+        const first = day.entries[0];
+        const rising = first?.type === "Hochwasser";
+        trendIcon.textContent = rising ? "⬆️" : "⬇️";
+        trendText.textContent = rising ? "Das Wasser steigt" : "Das Wasser fällt";
+        nextInfo.textContent = `(nächstes ${first?.type ?? "Ereignis"} um ${first?.time ?? "–:–"})`;
+        trendText.classList.toggle("down", !rising);
+      }
 
-      const nextType = nextTide
-        ? day.entries.find(e => e.time === nextTide).type
-        : day.entries[0].type;
-
-      const isRising = nextType.toLowerCase().includes("high");
-      document.getElementById("arrow").textContent = isRising ? "⬆️" : "⬇️";
-      document.getElementById("trend").textContent = isRising
-        ? "Das Wasser steigt"
-        : "Das Wasser fällt";
-      document.getElementById("trend").className =
-        "font-semibold mb-2 " + (isRising ? "text-green-600" : "text-red-600");
-
-      document.getElementById("next-tide").textContent =
-        nextType.toLowerCase().includes("high")
-          ? `(nächstes Hochwasser um ${nextTide})`
-          : `(nächstes Niedrigwasser um ${nextTide})`;
+      // Fußzeile
+      foot.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${UPDATED} ${tz}`;
     }
 
-    function updateButtonsState(offset) {
-      const btns = [
-        document.getElementById("btn-heute"),
-        document.getElementById("btn-morgen"),
-        document.getElementById("btn-uebermorgen")
-      ];
-      btns.forEach(b => b.classList.remove("active"));
-      if (btns[offset]) btns[offset].classList.add("active");
+    function nowIsoInCanary(){
+      // "YYYY-MM-DD" in Atlantic/Canary
+      const now = new Date();
+      const y = new Intl.DateTimeFormat("en-CA",{timeZone:"Atlantic/Canary",year:"numeric"}).format(now);
+      const m = new Intl.DateTimeFormat("en-CA",{timeZone:"Atlantic/Canary",month:"2-digit"}).format(now);
+      const d = new Intl.DateTimeFormat("en-CA",{timeZone:"Atlantic/Canary",day:"2-digit"}).format(now);
+      return `${y}-${m}-${d}`;
+    }
+    function curTimeHM(){
+      const now = new Date();
+      const h = new Intl.DateTimeFormat("de-DE",{timeZone:"Atlantic/Canary",hour:"2-digit",hour12:false}).format(now);
+      const m = new Intl.DateTimeFormat("de-DE",{timeZone:"Atlantic/Canary",minute:"2-digit"}).format(now);
+      return `${h}:${m}`;
     }
 
-    function setViewByOffset(days, offset) {
-      const idx = Math.min(Math.max(todayIndex + offset, 0), days.length - 1);
-      currentIndex = idx;
-      renderDay(days[idx]);
-      updateButtonsState(offset);
+    function fillSelect(){
+      sel.innerHTML = DAYS.map(d=>{
+        const label = fmtDE.format(new Date(`${d.date}T12:00:00Z`))
+          .replace(/,\s*/," – "); // etwas kompakter
+        return `<option value="${d.date}">${label}</option>`;
+      }).join("");
     }
 
-    let todayIndex = 0;
-    let currentIndex = 0;
+    async function init(){
+      const res = await fetch(DATA_URL, { cache: "no-store" });
+      const data = await res.json();
+      DAYS = data.days || [];
+      UPDATED = data.updatedAt || "";
+      tz = data.timezone || "WET";
+      if (!DAYS.length){ renderDay(nowIsoInCanary()); return; }
 
-    fetch("./data/latest.json")
-      .then(res => res.json())
-      .then(data => {
-        const days = data.days || [];
-        todayIndex = findTodayIndex(days);
-        setViewByOffset(days, 0);
-        document.getElementById("btn-heute").addEventListener("click", () => setViewByOffset(days, 0));
-        document.getElementById("btn-morgen").addEventListener("click", () => setViewByOffset(days, 1));
-        document.getElementById("btn-uebermorgen").addEventListener("click", () => setViewByOffset(days, 2));
-        document.getElementById("updated").textContent = "Aktualisiert: " + data.updatedAt;
-      })
-      .catch(err => {
-        console.error(err);
-        document.getElementById("tides").innerHTML = `<tr><td colspan="3">Fehler beim Laden der Daten</td></tr>`;
-      });
+      fillSelect();
+
+      // Buttons: Positionen für heute/morgen/übermorgen finden
+      const todayIso = nowIsoInCanary();
+      const todayIdx = DAYS.findIndex(d => d.date === todayIso);
+      const tomorrowIdx = todayIdx >= 0 ? todayIdx+1 : -1;
+      const dayAfterIdx = todayIdx >= 0 ? todayIdx+2 : -1;
+
+      function gotoIdx(i, btn){
+        if (i < 0 || i >= DAYS.length) return;
+        setActive(btn);
+        sel.value = DAYS[i].date;
+        renderDay(DAYS[i].date);
+      }
+
+      btnToday.onclick = ()=> gotoIdx(todayIdx, btnToday);
+      btnTomorrow.onclick = ()=> gotoIdx(tomorrowIdx, btnTomorrow);
+      btnDayAfter.onclick = ()=> gotoIdx(dayAfterIdx, btnDayAfter);
+      sel.onchange = ()=>{ setActive(null); renderDay(sel.value); };
+
+      // Startansicht: Heute (falls vorhanden), sonst erster Tag
+      if (todayIdx >= 0){ gotoIdx(todayIdx, btnToday); }
+      else { setActive(null); sel.selectedIndex = 0; renderDay(sel.value); }
+    }
+
+    init().catch(err=>{
+      tbody.innerHTML = `<tr><td colspan="3" class="sub">Fehler beim Laden der Daten.</td></tr>`;
+      console.error(err);
+    });
   </script>
 </body>
 </html>
