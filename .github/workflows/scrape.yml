@@ -1,50 +1,46 @@
 name: Scrape tides and deploy
 
 on:
-  schedule:
-    - cron: "15 0 * * *"
   workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *" # Läuft alle 6 Stunden automatisch
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: 🧾 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: ⚙️ Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - name: 📦 Install dependencies
+        run: |
+          npm install node-fetch@3 cheerio
 
-      - name: Run tide fetch script
-        run: node scripts/fetch.js
+      - name: 🌊 Run tide fetch script
+        run: |
+          echo "🌊 Lade Gezeiten für Playa del Inglés ..."
+          node scripts/fetch.js
+          echo "✅ Gezeiten erfolgreich gespeichert."
 
-      - name: Copy frontend to public
-        run: mkdir -p public
-
-      - name: Copy data to public
+      - name: 📂 Copy frontend & data to public
         run: |
           mkdir -p public/data
+          cp -r index.html public/
           cp -r data/latest.json public/data/latest.json
+          echo "✅ Dateien erfolgreich in /public kopiert."
 
-      - name: Deploy to GitHub Pages
+      - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
+          commit_message: "Auto-deploy: Aktualisierte Gezeiten-Daten 🌊"
 
-
-
-
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          commit_message: "🚀 Automatisches Gezeiten-Update"
+      - name: ✅ Deployment complete
+        run: echo "🎉 Deployment erfolgreich abgeschlossen!"
