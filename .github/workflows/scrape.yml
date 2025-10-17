@@ -1,9 +1,9 @@
 name: Scrape tides and deploy
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "0 */3 * * *"  # Alle 3 Stunden automatisch ausführen
-  workflow_dispatch:       # Manuell starten möglich
+    - cron: "0 10 * * *" # jeden Tag um 10:00 UTC
 
 jobs:
   build:
@@ -16,26 +16,25 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
 
       - name: Install dependencies
         run: |
-          echo "🧩 Installiere Abhängigkeiten..."
-          npm install cheerio axios
+          echo "🪄 Installiere Abhängigkeiten..."
+          npm install
 
-    - name: Run tide fetch script
-      run: |
-        echo "🌊 Lade Gezeiten für Playa del Inglés ..."
-        node --no-sandbox --disable-setuid-sandbox scripts/fetch.js
-      env:
-        PUPPETEER_SKIP_DOWNLOAD: "true"
-
+      - name: Run tide fetch script
+        run: |
+          echo "🌊 Lade Gezeiten für Playa del Inglés ..."
+          node --no-sandbox --disable-setuid-sandbox scripts/fetch.js
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
 
       - name: Copy frontend & data to public
         run: |
           mkdir -p public/data
-          cp -r frontend/index.html public/
-          cp -r data/latest.json public/data/latest.json || echo "⚠️ Keine Daten gefunden – Überspringe Kopie"
+          cp -r frontend/* public/ || true
+          cp -r data/* public/data/ || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
