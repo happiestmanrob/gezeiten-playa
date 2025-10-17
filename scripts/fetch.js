@@ -17,22 +17,24 @@ async function scrapeTides() {
 
   const days = [];
 
+  // Jeder Tag ist in einem .tide-day-Container
   $(".tide-day").each((_, el) => {
-    // Das Datum steht jetzt in <div class="tide-day__date">
-    const title = $(el).find(".tide-day__date").text().trim();
+    const title =
+      $(el).find(".tide-day__date").text().trim() ||
+      $(el).find("caption").first().text().trim();
     if (!title) return;
 
     const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
     if (!dateMatch) return;
-
     const [, , day, month, year] = dateMatch;
     const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
 
     const tides = [];
 
-    // Tabellenklasse wurde geändert zu .tide-table
+    // robustere Tabellen-Auswahl (.tide-table oder .tide-day__content table)
     $(el)
-      .find("table.tide-table tbody tr")
+      .find("table.tide-table, .tide-day__content table")
+      .find("tbody tr")
       .each((_, row) => {
         const cols = $(row).find("td");
         if (cols.length < 3) return;
@@ -45,7 +47,7 @@ async function scrapeTides() {
 
         const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
 
-        // Höhe ist jetzt meist in ft – konvertiere nach m
+        // Höhe umrechnen ft → m
         const match = heightText.match(/([\d.,]+)/);
         let hoehe_m = null;
         if (match) {
@@ -56,7 +58,7 @@ async function scrapeTides() {
         if (!hoehe_m) return;
 
         tides.push({
-          zeit: timeText,
+          zeit: timeText.replace(/^0/, ""),
           typ,
           hoehe_m: parseFloat(hoehe_m),
         });
