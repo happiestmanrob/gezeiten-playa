@@ -11,20 +11,19 @@ async function fetchTides() {
     const $ = cheerio.load(html);
     const days = [];
 
-    // Jede Tabellenüberschrift repräsentiert einen Tag
-    $("table.tide-day__table").each((_, table) => {
-      const dateText = $(table).find("caption").text().trim(); // z.B. "Saturday 18 October 2025"
+    $(".tide-day").each((_, el) => {
+      const dateText = $(el).find(".tide-day__date").text().trim();
       const entries = [];
 
-      $(table)
-        .find("tbody tr")
+      $(el)
+        .find(".tide-table tbody tr")
         .each((_, row) => {
           const cells = $(row).find("td");
           if (cells.length < 3) return;
 
-          const time = $(cells[0]).text().trim(); // z.B. "06:01"
-          const typeText = $(cells[1]).text().trim(); // "High Tide" oder "Low Tide"
-          const heightText = $(cells[2]).text().trim(); // "5.58ft"
+          const time = $(cells[0]).text().trim();
+          const typeText = $(cells[1]).text().trim();
+          const heightText = $(cells[2]).text().trim();
 
           if (!time || !typeText || !heightText) return;
 
@@ -32,7 +31,7 @@ async function fetchTides() {
           let height = null;
           if (match) {
             const ft = parseFloat(match[1].replace(",", "."));
-            height = (ft * 0.3048).toFixed(2).replace(".", ",");
+            height = (ft * 0.3048).toFixed(2).replace(".", ","); // Umrechnung in Meter
           }
 
           entries.push({
@@ -43,7 +42,10 @@ async function fetchTides() {
         });
 
       if (entries.length > 0 && dateText) {
-        days.push({ date: convertDateToISO(dateText), entries });
+        days.push({
+          date: convertDateToISO(dateText),
+          entries,
+        });
       }
     });
 
@@ -57,7 +59,7 @@ async function fetchTides() {
 
     console.log(`✅ Gespeichert: ${days.length} Tage (${output.updatedAt})`);
   } catch (err) {
-    console.error("❌ Fehler beim Abrufen:", err);
+    console.error("❌ Fehler beim Abrufen:", err.message);
   }
 }
 
