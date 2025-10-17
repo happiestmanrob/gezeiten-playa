@@ -4,36 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🌊 Gezeiten · Playa del Inglés</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: "Inter", system-ui, sans-serif;
       background: radial-gradient(circle at top, #e6f5ff 0%, #d9f0ff 100%);
       display: flex;
       justify-content: center;
-      align-items: flex-start; /* 🔹 weniger Abstand oben */
+      align-items: flex-start;
       min-height: 100vh;
       margin: 0;
-      padding-top: 1.5rem; /* 🔹 kleinerer oberer Rand */
+      padding: 1.5rem 0;
     }
 
     .card {
       background: white;
-      padding: 1.2rem 1.6rem;
+      padding: 1.3rem 1.8rem;
       border-radius: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      max-width: 580px;
-      width: 92%;
+      max-width: 520px;
+      width: 85%; /* 🔹 schmaler, damit seitlicher Rand sichtbar bleibt */
       text-align: center;
     }
 
     h1 {
-      font-size: 1.5rem; /* 🔹 kleiner, damit auf Mobile in eine Zeile passt */
+      font-size: 1.5rem;
       margin: 0.2rem 0 0.3rem 0;
     }
 
     h2 {
       font-size: 0.95rem;
-      color: #666;
+      color: #555;
       margin-bottom: 1rem;
     }
 
@@ -47,13 +48,8 @@
       margin-bottom: 0.3rem;
     }
 
-    .status.up {
-      color: #2e7d32;
-    }
-
-    .status.down {
-      color: #d32f2f;
-    }
+    .status.up { color: #2e7d32; }
+    .status.down { color: #d32f2f; }
 
     .next {
       color: #000;
@@ -65,32 +61,51 @@
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
-      gap: 0.4rem;
+      gap: 0.5rem;
       margin-bottom: 1rem;
     }
 
-    button, select {
+    /* 🔹 Buttons moderner, mit 3D Effekt & sanftem Hover */
+    button {
+      background: linear-gradient(180deg, #5b8df7, #446ef3);
+      border: none;
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    button.active {
+      background: linear-gradient(180deg, #315cf0, #284ce0);
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* 🔹 Dropdown modernisiert, mit Poppins-Schrift */
+    select {
+      font-family: "Poppins", sans-serif;
       background: white;
       border: 1px solid #ccc;
       border-radius: 10px;
       padding: 0.45rem 0.8rem;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    button.active {
-      background-color: #4c6ef5;
-      color: white;
-      border-color: #4c6ef5;
-    }
-
-    select {
-      text-align: center; /* 🔹 Datum im Dropdown zentriert */
       font-size: 0.9rem;
-      padding: 0.45rem 0.4rem;
-      width: auto;
-      min-width: 210px; /* 🔹 etwas schmaler */
+      text-align: center;
+      min-width: 210px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: border-color 0.2s ease;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #4c6ef5;
+      box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.2);
     }
 
     table {
@@ -98,18 +113,27 @@
       border-collapse: collapse;
       text-align: center;
       margin-top: 1rem;
+      font-size: 0.95rem;
     }
 
     th {
       color: #666;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid #ddd;
-      font-size: 0.9rem;
+      font-weight: 600;
     }
 
     td {
-      padding: 0.35rem 0;
-      font-size: 0.95rem;
+      padding: 0.4rem 0;
+    }
+
+    /* 🔹 Dezente Zeilenfärbung */
+    tbody tr:nth-child(odd) {
+      background-color: #f9fbff;
+    }
+
+    tr.low {
+      background-color: #ecf4ff !important; /* helles Blau bei Niedrigwasser */
     }
 
     tr.low td {
@@ -128,13 +152,18 @@
       color: #777;
     }
 
-    footer span {
-      white-space: nowrap;
-    }
+    footer span { white-space: nowrap; }
 
     .error {
       color: #d32f2f;
       font-weight: 600;
+    }
+
+    @media (min-width: 768px) {
+      .card {
+        width: 60%;
+        max-width: 560px;
+      }
     }
   </style>
 </head>
@@ -242,7 +271,6 @@
           year: "numeric",
         }) + `, ${timeStr} Uhr`;
 
-      // Dropdown synchronisieren
       document.getElementById("date-select").value = day.date;
 
       const tbody = document.getElementById("tide-table");
@@ -297,22 +325,8 @@
         trendUp = nextTide?.typ === "Hochwasser";
         trendText = trendUp ? "Das Wasser steigt gerade" : "Das Wasser fällt gerade";
       } else {
-        if (!lastTide && !nextTide) {
-          trendText = "Keine Daten verfügbar";
-        } else if (!lastTide && nextTide) {
-          trendUp = nextTide.typ === "Hochwasser";
-          trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
-        } else if (!nextTide) {
-          const firstNext = allDays[idx + 1]?.tides[0];
-          if (firstNext) {
-            trendUp = firstNext.typ === "Hochwasser";
-            trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
-            nextTide = firstNext;
-          }
-        } else {
-          trendUp = lastTide.typ === "Niedrigwasser";
-          trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
-        }
+        trendUp = (lastTide?.typ === "Niedrigwasser") || (nextTide?.typ === "Hochwasser");
+        trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
       }
 
       document.getElementById("tide-status").textContent = trendText;
