@@ -217,8 +217,8 @@
       const dateObj = new Date(day.date);
       dateDisplay.textContent = dateObj.toLocaleDateString("de-DE", {
         weekday: "long",
-        day: "numeric",
-        month: "long",
+        day: "2-digit",
+        month: "2-digit",
         year: "numeric",
       });
 
