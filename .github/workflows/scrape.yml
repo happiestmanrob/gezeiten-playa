@@ -26,14 +26,13 @@ jobs:
         env:
           PUPPETEER_SKIP_DOWNLOAD: "true"
 
-      - name: Run tide fetch script with Puppeteer
+      - name: Copy frontend & data to public
         run: |
-          echo "🌊 Starte Headless Chrome..."
-          node scripts/fetch.js
-        env:
-          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-          NODE_OPTIONS: "--no-warnings"
+          echo "📦 Kopiere Frontend-Dateien und Daten nach public..."
+          mkdir -p public
+          cp -r frontend/* public/
+          mkdir -p public/data
+          cp -r public/data/* public/data/ || echo "Keine Daten gefunden."
 
       - name: Verify output files
         run: |
