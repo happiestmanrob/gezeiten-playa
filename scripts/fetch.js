@@ -18,7 +18,10 @@ async function scrapeTides() {
   const page = await browser.newPage();
   await page.goto(URL, { waitUntil: "networkidle2", timeout: 60000 });
 
-  await page.waitForSelector(".tide-header-today, .tide-header_card", { timeout: 30000 }).catch(() => null);
+  await page.waitForSelector(".tide-header-today", { timeout: 30000 });
+
+  // 🔽 Scrolle ganz nach unten, damit alle weiteren Tage geladen werden
+  await autoScroll(page);
 
   const html = await page.content();
   await browser.close();
@@ -26,7 +29,7 @@ async function scrapeTides() {
   const $ = cheerio.load(html);
   const days = [];
 
-  // 🔹 Zuerst "Heute"
+  // 🔹 Heute
   const todayBlock = $(".tide-header-today");
   if (todayBlock.length) {
     const todayData = extractDay(todayBlock, $);
@@ -36,7 +39,7 @@ async function scrapeTides() {
     }
   }
 
-  // 🔹 Danach alle folgenden Tage
+  // 🔹 Alle weiteren Tage
   $(".tide-header_card").each((_, el) => {
     const data = extractDay($(el), $);
     if (data) {
@@ -101,7 +104,6 @@ function extractDay(block, $) {
   });
 
   if (!tides.length) return null;
-
   return { date: dateISO, tides };
 }
 
@@ -118,6 +120,25 @@ function convertTo24h(timeStr) {
     if (ap === "AM" && hour === 12) hour = 0;
   }
   return `${String(hour).padStart(2, "0")}:${minute}`;
+}
+
+// 🔽 Automatisches Scrollen bis ans Ende (damit alles geladen ist)
+async function autoScroll(page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => {
+      let totalHeight = 0;
+      const distance = 400;
+      const timer = setInterval(() => {
+        const scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+        if (totalHeight >= scrollHeight - window.innerHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 250);
+    });
+  });
 }
 
 scrapeTides().catch((err) => {
