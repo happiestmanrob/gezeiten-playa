@@ -16,8 +16,10 @@
     <h1 class="text-3xl font-bold mb-1">🌊 Gezeiten · Playa del Inglés</h1>
     <p id="date" class="text-gray-600 mb-3"></p>
 
-    <div id="trend" class="text-lg font-semibold mb-2"></div>
-    <p id="next-tide" class="text-gray-800 mb-4"></p>
+    <!-- Trend -->
+    <div id="arrow" class="text-3xl mb-1"></div>
+    <div id="trend" class="font-semibold mb-2"></div>
+    <p id="next-tide" class="text-gray-800 mb-4 text-sm"></p>
 
     <div class="flex justify-center gap-2 mb-4">
       <button id="btn-heute" class="btn px-4 py-2 rounded-lg border">Heute</button>
@@ -60,8 +62,11 @@
 
     function renderDay(day) {
       document.getElementById("date").textContent = day.date;
+
       const tbody = document.getElementById("tides");
       tbody.innerHTML = "";
+
+      // Tabelle
       day.entries.forEach(e => {
         const tr = document.createElement("tr");
         const color = e.type.toLowerCase().includes("high") ? "text-green-600" : "text-red-600";
@@ -73,6 +78,33 @@
         `;
         tbody.appendChild(tr);
       });
+
+      // Trend berechnen
+      const now = nowCanary();
+      const allTimes = day.entries.map(e => e.time);
+      const nextTide = allTimes.find(t => {
+        const [h, m] = t.split(":");
+        const tideTime = new Date(now);
+        tideTime.setHours(h, m, 0, 0);
+        return tideTime > now;
+      });
+
+      const nextType = nextTide
+        ? day.entries.find(e => e.time === nextTide).type
+        : day.entries[0].type;
+
+      const isRising = nextType.toLowerCase().includes("high");
+      document.getElementById("arrow").textContent = isRising ? "⬆️" : "⬇️";
+      document.getElementById("trend").textContent = isRising
+        ? "Das Wasser steigt"
+        : "Das Wasser fällt";
+      document.getElementById("trend").className =
+        "font-semibold mb-2 " + (isRising ? "text-green-600" : "text-red-600");
+
+      document.getElementById("next-tide").textContent =
+        nextType.toLowerCase().includes("high")
+          ? `(nächstes Hochwasser um ${nextTide})`
+          : `(nächstes Niedrigwasser um ${nextTide})`;
     }
 
     function updateButtonsState(offset) {
