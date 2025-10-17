@@ -17,11 +17,8 @@ async function scrapeTides() {
 
   const days = [];
 
-  // Jeder Tag ist in einem .tide-day-Container
   $(".tide-day").each((_, el) => {
-    const title =
-      $(el).find(".tide-day__date").text().trim() ||
-      $(el).find("caption").first().text().trim();
+    const title = $(el).find(".tide-day__date").text().trim();
     if (!title) return;
 
     const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
@@ -31,10 +28,9 @@ async function scrapeTides() {
 
     const tides = [];
 
-    // robustere Tabellen-Auswahl (.tide-table oder .tide-day__content table)
+    // neue Struktur: .tide-day__table
     $(el)
-      .find("table.tide-table, .tide-day__content table")
-      .find("tbody tr")
+      .find(".tide-day__table tbody tr")
       .each((_, row) => {
         const cols = $(row).find("td");
         if (cols.length < 3) return;
@@ -47,7 +43,7 @@ async function scrapeTides() {
 
         const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
 
-        // Höhe umrechnen ft → m
+        // ft → m konvertieren
         const match = heightText.match(/([\d.,]+)/);
         let hoehe_m = null;
         if (match) {
@@ -70,9 +66,7 @@ async function scrapeTides() {
     }
   });
 
-  if (!days.length) {
-    throw new Error("❌ Keine Gezeiten-Tabelle gefunden!");
-  }
+  if (!days.length) throw new Error("❌ Keine Gezeiten-Tabelle gefunden!");
 
   const result = {
     meta: {
