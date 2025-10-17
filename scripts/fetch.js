@@ -1,8 +1,15 @@
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import fs from "fs";
+import path from "path";
 
-// Hilfsfunktion: "12:09 PM" / "6:35 AM" -> "12:09" / "06:35" (24h)
+// Stelle sicher, dass data-Ordner existiert
+const dataDir = "./data";
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
+
+// Hilfsfunktion: AM/PM → 24h
 function to24h(timeStr) {
   if (!timeStr) return "";
   const m = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
@@ -26,9 +33,14 @@ async function scrapeTides() {
   const days = [];
 
   $(".tide-day").each((i, el) => {
-    const date = $(el).find(".tide-day__date").text().trim().replace("Tide Times for Playa del Ingles:", "").trim();
-    const entries = [];
+    const date = $(el)
+      .find(".tide-day__date")
+      .text()
+      .trim()
+      .replace("Tide Times for Playa del Ingles:", "")
+      .trim();
 
+    const entries = [];
     $(el)
       .find("table.tide-day-tides tr")
       .each((j, tr) => {
@@ -45,10 +57,7 @@ async function scrapeTides() {
       });
 
     if (entries.length > 0) {
-      days.push({
-        date,
-        entries,
-      });
+      days.push({ date, entries });
     }
   });
 
@@ -56,12 +65,9 @@ async function scrapeTides() {
     timeZone: "Atlantic/Canary",
   });
 
-  fs.writeFileSync(
-    "./data/latest.json",
-    JSON.stringify({ updatedAt, days }, null, 2)
-  );
-
+  const filePath = path.join(dataDir, "latest.json");
+  fs.writeFileSync(filePath, JSON.stringify({ updatedAt, days }, null, 2));
   console.log(`✅ Gespeichert: ${days.length} Tage (${updatedAt})`);
 }
 
-scrapeTides().catch((err) => console.error(err));
+scrapeTides().catch(console.error);
