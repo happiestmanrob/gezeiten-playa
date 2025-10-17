@@ -23,10 +23,13 @@ jobs:
       - name: Run tide fetch script
         run: node scripts/fetch.js
 
-      - name: Copy frontend to public
+      - name: Copy data to public
         run: |
-          mkdir -p public
-          cp -r frontend/* public/
+          mkdir -p public/data
+          cp -r data/latest.json public/data/latest.json
+
+
+
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
