@@ -1,5 +1,5 @@
 {
-  "updatedAt": "17.10.2025, 03:03:01",
+  "updatedAt": "17.10.2025, 10:22:55",
   "days": [
     {
       "date": "Tide Times for Playa del Ingles (tomorrow): Saturday 18 October 2025",
@@ -658,6 +658,31 @@
           "time": "20:47",
           "type": "High Tide",
           "height": 4.69
+        }
+      ]
+    },
+    {
+      "date": "Friday 14 November 2025",
+      "entries": [
+        {
+          "time": "02:43",
+          "type": "Low Tide",
+          "height": 2.2
+        },
+        {
+          "time": "08:57",
+          "type": "High Tide",
+          "height": 5.38
+        },
+        {
+          "time": "15:32",
+          "type": "Low Tide",
+          "height": 1.51
+        },
+        {
+          "time": "21:44",
+          "type": "High Tide",
+          "height": 5.02
         }
       ]
     }
