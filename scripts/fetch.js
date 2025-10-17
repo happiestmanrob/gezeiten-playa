@@ -10,7 +10,6 @@ async function scrapeTides() {
   console.log("🌊 Lade Gezeiten für Playa del Inglés ...");
   console.log("🔗 URL:", URL);
 
-  // Puppeteer starten
   const browser = await puppeteer.launch({
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
@@ -19,7 +18,6 @@ async function scrapeTides() {
   const page = await browser.newPage();
   await page.goto(URL, { waitUntil: "networkidle2", timeout: 60000 });
 
-  // Warte, bis der heutige Bereich sichtbar ist
   await page.waitForSelector(".tide-header-today, .tide-header_card", { timeout: 30000 }).catch(() => null);
 
   const html = await page.content();
@@ -28,59 +26,27 @@ async function scrapeTides() {
   const $ = cheerio.load(html);
   const days = [];
 
-  // 🔹 Heute + zukünftige Tage laden
-  const dayBlocks = $(".tide-header-today, .tide-header_card");
+  // 🔹 Zuerst "Heute"
+  const todayBlock = $(".tide-header-today");
+  if (todayBlock.length) {
+    const todayData = extractDay(todayBlock, $);
+    if (todayData) {
+      days.push(todayData);
+      console.log(`📅 ${todayData.date}: ${todayData.tides.length} Einträge (heute)`);
+    }
+  }
 
-  dayBlocks.each((_, el) => {
-    const title = $(el).find("h3").text().trim();
-    if (!title) return;
-
-    // Beispiel: "Friday 17 October 2025"
-    const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
-    if (!dateMatch) return;
-
-    const [, , day, month, year] = dateMatch;
-    const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
-
-    const tides = [];
-
-    // 🔹 Tabelle der Gezeiten auslesen
-    $(el)
-      .find("table.tide-day-tides tbody tr")
-      .each((_, row) => {
-        const cols = $(row).find("td");
-        if (cols.length < 2) return;
-
-        const typeText = $(cols[0]).text().trim();
-        const timeText = $(cols[1]).find("b").first().text().trim();
-        const heightText = $(cols[2]).text().trim();
-
-        if (!typeText || !timeText || !heightText) return;
-
-        const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
-
-        // Höhe in Metern
-        const meterMatch = heightText.match(/([\d.]+)\s*m/);
-        const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
-        if (!hoehe_m) return;
-
-        // 🔹 Zeit in 24-Stunden-Format umwandeln
-        const zeit = convertTo24h(timeText);
-
-        tides.push({ zeit, typ, hoehe_m });
-      });
-
-    if (tides.length) {
-      days.push({ date: dateISO, tides });
-      console.log(`📅 ${dateISO}: ${tides.length} Einträge`);
+  // 🔹 Danach alle folgenden Tage
+  $(".tide-header_card").each((_, el) => {
+    const data = extractDay($(el), $);
+    if (data) {
+      days.push(data);
+      console.log(`📅 ${data.date}: ${data.tides.length} Einträge`);
     }
   });
 
-  if (!days.length) {
-    throw new Error("❌ Keine Gezeiten-Daten gefunden!");
-  }
+  if (!days.length) throw new Error("❌ Keine Gezeiten-Daten gefunden!");
 
-  // Ergebnisstruktur
   const result = {
     meta: {
       location: "Playa del Inglés",
@@ -90,7 +56,6 @@ async function scrapeTides() {
     days
   };
 
-  // 📂 JSON speichern
   const outputDir = path.resolve("public/data");
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
@@ -100,20 +65,58 @@ async function scrapeTides() {
   console.log(`✅ Erfolgreich geschrieben: ${outputFile} (${days.length} Tage)`);
 }
 
-// 🕒 Hilfsfunktion: 12h → 24h Zeitformat (z. B. "5:55 PM" → "17:55")
+// 🔧 Tagesdaten aus einem einzelnen Block extrahieren
+function extractDay(block, $) {
+  const title = block.find("h3").text().trim() || block.find("h4").text().trim();
+  if (!title) return null;
+
+  const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (!dateMatch) return null;
+
+  const [, , day, month, year] = dateMatch;
+  const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
+
+  const tides = [];
+
+  block.find("table.tide-day-tides tbody tr").each((_, row) => {
+    const cols = $(row).find("td");
+    if (cols.length < 3) return;
+
+    const typeText = $(cols[0]).text().trim();
+    const timeText = $(cols[1]).find("b").first().text().trim();
+    const heightText = $(cols[2]).text().trim();
+
+    if (!typeText || !timeText || !heightText) return;
+
+    const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
+    const meterMatch = heightText.match(/([\d.]+)\s*m/);
+    const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
+    if (!hoehe_m) return;
+
+    tides.push({
+      zeit: convertTo24h(timeText),
+      typ,
+      hoehe_m
+    });
+  });
+
+  if (!tides.length) return null;
+
+  return { date: dateISO, tides };
+}
+
+// 🕒 12h → 24h Zeitformat
 function convertTo24h(timeStr) {
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
   if (!match) return timeStr;
   let [_, h, m, ap] = match;
   let hour = parseInt(h, 10);
   const minute = m.padStart(2, "0");
-
   if (ap) {
     ap = ap.toUpperCase();
     if (ap === "PM" && hour < 12) hour += 12;
     if (ap === "AM" && hour === 12) hour = 0;
   }
-
   return `${String(hour).padStart(2, "0")}:${minute}`;
 }
 
