@@ -17,11 +17,7 @@ async function scrapeTides() {
 
   const page = await browser.newPage();
   await page.goto(URL, { waitUntil: "networkidle2", timeout: 60000 });
-
-  await page.waitForSelector(".tide-header-today", { timeout: 30000 });
-
-  // 🔽 Scrolle ganz nach unten, damit alle weiteren Tage geladen werden
-  await autoScroll(page);
+  await page.waitForSelector(".tide-header-today, .tide-day", { timeout: 30000 });
 
   const html = await page.content();
   await browser.close();
@@ -32,15 +28,15 @@ async function scrapeTides() {
   // 🔹 Heute
   const todayBlock = $(".tide-header-today");
   if (todayBlock.length) {
-    const todayData = extractDay(todayBlock, $);
+    const todayData = extractToday(todayBlock, $);
     if (todayData) {
       days.push(todayData);
       console.log(`📅 ${todayData.date}: ${todayData.tides.length} Einträge (heute)`);
     }
   }
 
-  // 🔹 Alle weiteren Tage
-  $(".tide-header_card").each((_, el) => {
+  // 🔹 Alle zukünftigen Tage
+  $(".tide-day").each((_, el) => {
     const data = extractDay($(el), $);
     if (data) {
       days.push(data);
@@ -68,11 +64,9 @@ async function scrapeTides() {
   console.log(`✅ Erfolgreich geschrieben: ${outputFile} (${days.length} Tage)`);
 }
 
-// 🔧 Tagesdaten aus einem einzelnen Block extrahieren
-function extractDay(block, $) {
-  const title = block.find("h3").text().trim() || block.find("h4").text().trim();
-  if (!title) return null;
-
+// 🔧 Heute-Block extrahieren
+function extractToday(block, $) {
+  const title = block.find("h3").text().trim();
   const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
   if (!dateMatch) return null;
 
@@ -80,7 +74,6 @@ function extractDay(block, $) {
   const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
 
   const tides = [];
-
   block.find("table.tide-day-tides tbody tr").each((_, row) => {
     const cols = $(row).find("td");
     if (cols.length < 3) return;
@@ -107,7 +100,43 @@ function extractDay(block, $) {
   return { date: dateISO, tides };
 }
 
-// 🕒 12h → 24h Zeitformat
+// 🔧 Alle folgenden Tage extrahieren
+function extractDay(block, $) {
+  const title = block.find("h4.tide-day__date").text().trim();
+  const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (!dateMatch) return null;
+
+  const [, , day, month, year] = dateMatch;
+  const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
+
+  const tides = [];
+  block.find("table.tide-day-tides tbody tr").each((_, row) => {
+    const cols = $(row).find("td");
+    if (cols.length < 3) return;
+
+    const typeText = $(cols[0]).text().trim();
+    const timeText = $(cols[1]).find("b").first().text().trim();
+    const heightText = $(cols[2]).text().trim();
+
+    if (!typeText || !timeText || !heightText) return;
+
+    const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
+    const meterMatch = heightText.match(/([\d.]+)\s*m/);
+    const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
+    if (!hoehe_m) return;
+
+    tides.push({
+      zeit: convertTo24h(timeText),
+      typ,
+      hoehe_m
+    });
+  });
+
+  if (!tides.length) return null;
+  return { date: dateISO, tides };
+}
+
+// 🕒 Zeit ins 24h-Format umwandeln
 function convertTo24h(timeStr) {
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
   if (!match) return timeStr;
@@ -120,25 +149,6 @@ function convertTo24h(timeStr) {
     if (ap === "AM" && hour === 12) hour = 0;
   }
   return `${String(hour).padStart(2, "0")}:${minute}`;
-}
-
-// 🔽 Automatisches Scrollen bis ans Ende (damit alles geladen ist)
-async function autoScroll(page) {
-  await page.evaluate(async () => {
-    await new Promise((resolve) => {
-      let totalHeight = 0;
-      const distance = 400;
-      const timer = setInterval(() => {
-        const scrollHeight = document.body.scrollHeight;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
-        if (totalHeight >= scrollHeight - window.innerHeight) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, 250);
-    });
-  });
 }
 
 scrapeTides().catch((err) => {
