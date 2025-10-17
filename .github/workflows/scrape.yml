@@ -23,10 +23,13 @@ jobs:
           echo "🧩 Installiere Abhängigkeiten..."
           npm install cheerio axios
 
-      - name: Run tide fetch script
-        run: |
-          echo "🌊 Lade Gezeiten für Playa del Inglés ..."
-          node scripts/fetch.js
+    - name: Run tide fetch script
+      run: |
+        echo "🌊 Lade Gezeiten für Playa del Inglés ..."
+        node --no-sandbox --disable-setuid-sandbox scripts/fetch.js
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: "true"
+
 
       - name: Copy frontend & data to public
         run: |
