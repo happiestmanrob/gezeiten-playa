@@ -6,26 +6,39 @@
   <title>🌊 Gezeiten · Playa del Inglés</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: "Inter", system-ui, sans-serif;
-      background: radial-gradient(circle at top, #e6f5ff 0%, #d9f0ff 100%);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      margin: 0;
-      padding: 1.5rem 0;
-    }
+   body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #e6f5ff 0%, #d9f0ff 100%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 1.5rem 0;
+}
 
-    .card {
-      background: white;
-      padding: 1.3rem 1.8rem;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      max-width: 520px;
-      width: 85%; /* 🔹 schmaler, damit seitlicher Rand sichtbar bleibt */
-      text-align: center;
-    }
+.card {
+  background: white;
+  padding: 1.3rem 1.8rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  width: 90%;           /* 🔹 mehr Rand links/rechts */
+  max-width: 500px;     /* 🔹 etwas schmaler für mobile Optik */
+  text-align: center;
+}
+
+footer {
+  margin-top: 0.8rem;
+  font-size: 0.7rem;     /* 🔹 kleiner */
+  color: #888;           /* etwas heller für dezente Optik */
+  line-height: 1.2;
+  white-space: nowrap;   /* 🔹 bleibt in einer Zeile */
+}
+
+footer span {
+  white-space: nowrap;
+}
+
 
     h1 {
       font-size: 1.5rem;
