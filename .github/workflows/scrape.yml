@@ -1,13 +1,14 @@
 name: Scrape tides and deploy
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:          # Manuell starten
   schedule:
-    - cron: "0 10 * * *" # jeden Tag um 10:00 UTC
+    - cron: "0 10 * * *"      # Jeden Tag um 10:00 UTC (11:00 Kanarenzeit)
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10       # Sicherheit: bricht ab, falls Puppeteer hängt
 
     steps:
       - name: Checkout repository
@@ -21,20 +22,24 @@ jobs:
       - name: Install dependencies
         run: |
           echo "🪄 Installiere Abhängigkeiten..."
-          npm install
-
-      - name: Run tide fetch script
-        run: |
-          echo "🌊 Lade Gezeiten für Playa del Inglés ..."
-          node --no-sandbox --disable-setuid-sandbox scripts/fetch.js
+          npm ci || npm install
         env:
           PUPPETEER_SKIP_DOWNLOAD: "true"
 
-      - name: Copy frontend & data to public
+      - name: Run tide fetch script with Puppeteer
         run: |
-          mkdir -p public/data
-          cp -r frontend/* public/ || true
-          cp -r data/* public/data/ || true
+          echo "🌊 Starte Headless Chrome..."
+          node scripts/fetch.js
+        env:
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+          NODE_OPTIONS: "--no-warnings"
+
+      - name: Verify output files
+        run: |
+          echo "📂 Überprüfe erzeugte Dateien..."
+          ls -R public || echo "⚠️ Kein 'public'-Ordner gefunden!"
+          test -f public/data/latest.json && echo "✅ latest.json gefunden!" || echo "❌ latest.json fehlt!"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
