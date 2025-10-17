@@ -25,7 +25,7 @@ async function scrapeTides() {
   const $ = cheerio.load(html);
   const days = [];
 
-  // 🔹 Heute
+  // 🔹 Heute (explizit eigener Block)
   const todayBlock = $(".tide-header-today");
   if (todayBlock.length) {
     const todayData = extractToday(todayBlock, $);
@@ -35,7 +35,7 @@ async function scrapeTides() {
     }
   }
 
-  // 🔹 Alle zukünftigen Tage
+  // 🔹 Zukünftige Tage (alle .tide-day-Container)
   $(".tide-day").each((_, el) => {
     const data = extractDay($(el), $);
     if (data) {
@@ -96,11 +96,10 @@ function extractToday(block, $) {
     });
   });
 
-  if (!tides.length) return null;
-  return { date: dateISO, tides };
+  return tides.length ? { date: dateISO, tides } : null;
 }
 
-// 🔧 Alle folgenden Tage extrahieren
+// 🔧 Zukünftige Tage extrahieren
 function extractDay(block, $) {
   const title = block.find("h4.tide-day__date").text().trim();
   const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
@@ -132,11 +131,10 @@ function extractDay(block, $) {
     });
   });
 
-  if (!tides.length) return null;
-  return { date: dateISO, tides };
+  return tides.length ? { date: dateISO, tides } : null;
 }
 
-// 🕒 Zeit ins 24h-Format umwandeln
+// 🕒 Zeit ins 24h-Format konvertieren
 function convertTo24h(timeStr) {
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
   if (!match) return timeStr;
