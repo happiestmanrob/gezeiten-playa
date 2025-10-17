@@ -31,9 +31,10 @@ jobs:
       - name: 📂 Copy frontend & data to public
         run: |
           mkdir -p public/data
-          cp -r index.html public/
-          cp -r data/latest.json public/data/latest.json
+          cp -r frontend/index.html public/
+          cp -r data/latest.json public/data/latest.json || echo "⚠️ Keine JSON-Datei vorhanden – wird übersprungen."
           echo "✅ Dateien erfolgreich in /public kopiert."
+
 
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
