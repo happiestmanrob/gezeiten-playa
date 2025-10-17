@@ -1,20 +1,14 @@
 {
   "name": "gezeiten-playa",
   "version": "1.0.0",
-  "description": "Automatischer Gezeiten-Scraper und Webinterface für Playa del Inglés.",
-  "type": "module",
+  "description": "Automatischer Gezeiten-Scraper und Website für Playa del Inglés",
   "main": "scripts/fetch.js",
+  "type": "module",
   "scripts": {
-    "fetch": "node scripts/fetch.js",
-    "start": "npx serve frontend",
-    "build": "npm run fetch"
+    "scrape": "node scripts/fetch.js"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "author": "happiestmanrob",
-  "license": "MIT"
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^3.3.2"
+  }
 }
