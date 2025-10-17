@@ -107,6 +107,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="card">
     <h1>🌊 Gezeiten · Playa del Inglés</h1>
@@ -137,36 +138,44 @@
     </footer>
   </div>
 
+  <!-- Skript kommt am ENDE des Body, damit DOM garantiert geladen ist -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("load", () => {
       const heuteButton = document.getElementById("heute");
       const morgenButton = document.getElementById("morgen");
       const uebermorgenButton = document.getElementById("uebermorgen");
       const dateSelect = document.getElementById("dateSelect");
       const tableBody = document.querySelector("#tideTable tbody");
 
+      // Buttons prüfen
       if (!heuteButton || !morgenButton || !uebermorgenButton || !dateSelect) {
-        console.error("❌ Elemente nicht gefunden – HTML prüfen!");
+        console.error("❌ Buttons oder Dropdown nicht gefunden!");
+        tableBody.innerHTML = `<tr><td colspan="3">Fehler: HTML-Elemente fehlen.</td></tr>`;
         return;
       }
 
-      // Lade gespeicherte Daten
-      fetch("data/latest.json")
-        .then((r) => r.json())
-        .then((data) => {
-          window.tideData = data.days || [];
-          fillDropdown(window.tideData);
-          showTides(0);
-        })
-        .catch((err) => {
-          console.error("Fehler beim Laden der Daten:", err);
-          tableBody.innerHTML = `<tr><td colspan="3">❌ Keine Daten gefunden.</td></tr>`;
-        });
-
+      // Klick-Events
       heuteButton.onclick = () => showTides(0);
       morgenButton.onclick = () => showTides(1);
       uebermorgenButton.onclick = () => showTides(2);
       dateSelect.onchange = () => showTides(dateSelect.selectedIndex);
+
+      // Daten laden
+      fetch("data/latest.json")
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.days || data.days.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="3">Keine Daten gefunden.</td></tr>`;
+            return;
+          }
+          window.tideData = data.days;
+          fillDropdown(window.tideData);
+          showTides(0);
+        })
+        .catch((err) => {
+          console.error("Fehler beim Laden:", err);
+          tableBody.innerHTML = `<tr><td colspan="3">❌ Keine Daten geladen.</td></tr>`;
+        });
 
       function fillDropdown(days) {
         dateSelect.innerHTML = "";
@@ -178,17 +187,16 @@
       }
 
       function showTides(index) {
-        if (!window.tideData || !window.tideData[index]) return;
+        const data = window.tideData;
+        if (!data || !data[index]) return;
 
-        const { date, entries } = window.tideData[index];
+        const { date, entries } = data[index];
         document.getElementById("dateHeading").textContent = formatGermanDate(date);
         dateSelect.selectedIndex = index;
 
-        // Button-Stil aktualisieren
         [heuteButton, morgenButton, uebermorgenButton].forEach((b) => b.classList.remove("active"));
         [heuteButton, morgenButton, uebermorgenButton][index]?.classList.add("active");
 
-        // Tabelleninhalt erstellen
         tableBody.innerHTML = entries.map((tide) => {
           const typeClass = tide.type.toLowerCase().includes("hoch") ? "hoch" : "niedrig";
           const height = convertToMeters(tide.height);
@@ -199,7 +207,6 @@
                   </tr>`;
         }).join("");
 
-        // Status oben aktualisieren
         const nextHigh = entries.find(e => e.type.toLowerCase().includes("hoch"));
         if (nextHigh) {
           document.getElementById("arrow").textContent = "⬆️";
