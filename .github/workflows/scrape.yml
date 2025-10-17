@@ -1,47 +1,53 @@
 name: Scrape tides and deploy
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *" # Läuft alle 6 Stunden automatisch
+    - cron: "0 */3 * * *" # alle 3 Stunden
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Checkout repository
+      # 1️⃣ Repo auschecken
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: ⚙️ Set up Node.js
+      # 2️⃣ Node.js einrichten (verwende 20.x)
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
 
-      - name: 📦 Install dependencies
+      # 3️⃣ Dependencies installieren (inkl. cheerio)
+      - name: Install dependencies
         run: |
-          npm install node-fetch@3 cheerio
+          npm ci
+          npm install cheerio@1.0.0-rc.12
 
-      - name: 🌊 Run tide fetch script
+      # 4️⃣ Tide-Daten abrufen und JSON erzeugen
+      - name: Run tide fetch script
         run: |
           echo "🌊 Lade Gezeiten für Playa del Inglés ..."
           node scripts/fetch.js
-          echo "✅ Gezeiten erfolgreich gespeichert."
 
-      - name: 📂 Copy frontend & data to public
+      # 5️⃣ Frontend & Daten in den Veröffentlichungsordner kopieren
+      - name: Copy frontend & data to public
         run: |
-          mkdir -p public/data
-          cp -r frontend/index.html public/
-          cp -r data/latest.json public/data/latest.json || echo "⚠️ Keine JSON-Datei vorhanden – wird übersprungen."
-          echo "✅ Dateien erfolgreich in /public kopiert."
+          mkdir -p public
+          cp -r frontend/* public/
+          echo "✅ Frontend nach /public kopiert."
 
-
-      - name: 🚀 Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      # 6️⃣ Deployment zu GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          commit_message: "Auto-deploy: Aktualisierte Gezeiten-Daten 🌊"
+          force_orphan: true
 
-      - name: ✅ Deployment complete
-        run: echo "🎉 Deployment erfolgreich abgeschlossen!"
+      # 7️⃣ Abschluss
+      - name: Deployment complete
+        run: echo "🚀 Gezeiten erfolgreich aktualisiert und veröffentlicht!"
