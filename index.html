@@ -156,141 +156,177 @@
   </div>
 
   <script>
-    let activeIndex = 0;
+  let activeIndex = 0;
 
-    async function loadTideData() {
-      try {
-        const basePath = window.location.pathname.replace(/\/$/, "");
-        const response = await fetch(`${basePath}/data/latest.json`);
-        if (!response.ok) throw new Error("Fehler beim Laden der JSON-Datei.");
+  async function loadTideData() {
+    try {
+      const basePath = window.location.pathname.replace(/\/$/, "");
+      const response = await fetch(`${basePath}/data/latest.json`);
+      if (!response.ok) throw new Error("Fehler beim Laden der JSON-Datei.");
+      const data = await response.json();
+      if (!data.days?.length) throw new Error("Keine Daten gefunden.");
 
-        const data = await response.json();
-        if (!data.days || data.days.length === 0)
-          throw new Error("Keine Daten gefunden.");
-
-        window.tideData = data.days;
-
-        const todayIndex = findTodayIndex(data.days);
-        populateDateSelect(data.days);
-        showDay(todayIndex);
-      } catch (err) {
-        document.getElementById("tide-table").innerHTML =
-          `<tr><td colspan="3" class="error">❌ ${err.message}</td></tr>`;
-      }
+      window.tideData = data.days;
+      const todayIndex = findTodayIndex(data.days);
+      populateDateSelect(data.days);
+      showDay(todayIndex);
+    } catch (err) {
+      document.getElementById("tide-table").innerHTML =
+        `<tr><td colspan="3" class="error">❌ ${err.message}</td></tr>`;
     }
+  }
 
-    function findTodayIndex(days) {
-      const todayStr = new Date().toISOString().split("T")[0];
-      const index = days.findIndex((d) => d.date === todayStr);
-      return index >= 0 ? index : 0; // fallback auf 0
-    }
+  function findTodayIndex(days) {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const index = days.findIndex((d) => d.date === todayStr);
+    return index >= 0 ? index : 0;
+  }
 
-    function populateDateSelect(days) {
-      const select = document.getElementById("date-select");
-      select.innerHTML = "";
-      days.forEach((d) => {
-        const dateObj = new Date(d.date);
-        const option = document.createElement("option");
-        option.value = d.date;
-        option.textContent = dateObj.toLocaleDateString("de-DE", {
-          weekday: "long",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
-        select.appendChild(option);
-      });
-      select.addEventListener("change", () => {
-        const index = days.findIndex((d) => d.date === select.value);
-        if (index !== -1) showDay(index);
-      });
-    }
-
-    function showDay(index) {
-      activeIndex = index;
-      updateButtons();
-
-      const day = window.tideData[index];
-      const dateDisplay = document.getElementById("date-display");
-      const tideTable = document.getElementById("tide-table");
-
-      const dateObj = new Date(day.date);
-      dateDisplay.textContent = dateObj.toLocaleDateString("de-DE", {
+  function populateDateSelect(days) {
+    const select = document.getElementById("date-select");
+    select.innerHTML = "";
+    days.forEach((d) => {
+      const dateObj = new Date(d.date);
+      const option = document.createElement("option");
+      option.value = d.date;
+      option.textContent = dateObj.toLocaleDateString("de-DE", {
         weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-
-      tideTable.innerHTML = "";
-      day.tides.forEach((t) => {
-        const tr = document.createElement("tr");
-        const cls = t.typ === "Niedrigwasser" ? "low" : "high";
-        tr.classList.add(cls);
-        const formatted = formatTime(t.zeit);
-        tr.innerHTML = `
-          <td>${formatted}</td>
-          <td>${t.typ}</td>
-          <td>${t.hoehe_m?.toFixed(2) ?? "-"}</td>
-        `;
-        tideTable.appendChild(tr);
-      });
-
-      updateStatus(day);
-    }
-
-    function updateButtons() {
-      document.getElementById("btn-today").classList.toggle("active", activeIndex === findTodayIndex(window.tideData));
-      document.getElementById("btn-tomorrow").classList.toggle("active", activeIndex === findTodayIndex(window.tideData) + 1);
-      document.getElementById("btn-after").classList.toggle("active", activeIndex === findTodayIndex(window.tideData) + 2);
-    }
-
-    function updateStatus(day) {
-      const status = document.getElementById("tide-status");
-      const icon = document.getElementById("tide-icon");
-      const next = document.getElementById("next-high");
-
-      const now = new Date();
-      const tides = day.tides.map((t) => ({
-        ...t,
-        time: new Date(`${day.date}T${formatTime(t.zeit)}:00`),
-      }));
-
-      let nextEvent = tides.find((t) => t.time > now);
-      if (!nextEvent) nextEvent = tides[0]; // fallback for future days
-
-      const falling = nextEvent.typ === "Niedrigwasser";
-
-      status.textContent = falling ? "Das Wasser fällt" : "Das Wasser steigt";
-      status.className = falling ? "status down" : "status up";
-      icon.textContent = falling ? "⬇️" : "⬆️";
-
-      const eventText = falling ? "Niedrigwasser" : "Hochwasser";
-      next.textContent = `nächstes ${eventText} um ${formatTime(nextEvent.zeit)} Uhr`;
-
-      const footer = document.getElementById("footer-text");
-      const updated = new Date().toLocaleString("de-DE", {
-        timeZone: "Europe/London",
-        hour: "2-digit",
-        minute: "2-digit",
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       });
-      footer.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${updated} WET`;
+      select.appendChild(option);
+    });
+    select.addEventListener("change", () => {
+      const index = days.findIndex((d) => d.date === select.value);
+      if (index !== -1) showDay(index);
+    });
+  }
+
+  function formatTime(t) {
+    const [h, m] = t.split(":").map(Number);
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+
+  function showDay(index) {
+    activeIndex = index;
+    updateButtons();
+
+    const day = window.tideData[index];
+    const dateObj = new Date(day.date);
+    document.getElementById("date-display").textContent = dateObj.toLocaleDateString("de-DE", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Dropdown synchronisieren
+    document.getElementById("date-select").value = day.date;
+
+    const tbody = document.getElementById("tide-table");
+    tbody.innerHTML = "";
+    day.tides.forEach((t) => {
+      const tr = document.createElement("tr");
+      tr.classList.add(t.typ === "Niedrigwasser" ? "low" : "high");
+      tr.innerHTML = `
+        <td>${formatTime(t.zeit)}</td>
+        <td>${t.typ}</td>
+        <td>${t.hoehe_m.toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    updateStatus(day);
+  }
+
+  function updateButtons() {
+    const todayIndex = findTodayIndex(window.tideData);
+    document.getElementById("btn-today").classList.toggle("active", activeIndex === todayIndex);
+    document.getElementById("btn-tomorrow").classList.toggle("active", activeIndex === todayIndex + 1);
+    document.getElementById("btn-after").classList.toggle("active", activeIndex === todayIndex + 2);
+  }
+
+  function updateStatus(day) {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const todayISO = new Date().toISOString().split("T")[0];
+    const selectedDateISO = day.date;
+
+    const allDays = window.tideData;
+    const idx = allDays.findIndex((d) => d.date === selectedDateISO);
+
+    const toMinutes = (t) => {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+
+    let lastTide = null;
+    let nextTide = null;
+
+    for (const tide of day.tides) {
+      const mins = toMinutes(tide.zeit);
+      if (mins <= nowMinutes) lastTide = tide;
+      if (mins > nowMinutes && !nextTide) nextTide = tide;
     }
 
-    // 🕒 24-Stunden-Format mit führender Null
-    function formatTime(timeStr) {
-      const [h, m] = timeStr.split(":").map(Number);
-      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    // Wenn Tag durch ist → erste Tide vom nächsten Tag
+    if (!nextTide && allDays[idx + 1]) nextTide = allDays[idx + 1].tides[0];
+
+    let trendText = "";
+    let trendUp = false;
+
+    if (selectedDateISO === todayISO) {
+      trendUp = nextTide?.typ === "Hochwasser";
+      trendText = trendUp ? "Das Wasser steigt gerade" : "Das Wasser fällt gerade";
+    } else {
+      if (!lastTide && !nextTide) {
+        trendText = "Keine Daten verfügbar";
+      } else if (!lastTide && nextTide) {
+        trendUp = nextTide.typ === "Hochwasser";
+        trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
+      } else if (!nextTide) {
+        const firstNext = allDays[idx + 1]?.tides[0];
+        if (firstNext) {
+          trendUp = firstNext.typ === "Hochwasser";
+          trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
+          nextTide = firstNext;
+        }
+      } else {
+        trendUp = lastTide.typ === "Niedrigwasser";
+        trendText = trendUp ? "Das Wasser steigt dann" : "Das Wasser fällt dann";
+      }
     }
 
-    document.getElementById("btn-today").onclick = () => showDay(findTodayIndex(window.tideData));
-    document.getElementById("btn-tomorrow").onclick = () => showDay(findTodayIndex(window.tideData) + 1);
-    document.getElementById("btn-after").onclick = () => showDay(findTodayIndex(window.tideData) + 2);
+    document.getElementById("tide-status").textContent = trendText;
+    document.getElementById("tide-status").className = trendUp ? "status up" : "status down";
+    document.getElementById("tide-icon").textContent = trendUp ? "⬆️" : "⬇️";
 
-    loadTideData();
-  </script>
+    if (nextTide) {
+      document.getElementById("next-high").textContent =
+        `nächstes ${nextTide.typ} um ${formatTime(nextTide.zeit)} Uhr`;
+    }
+
+    // Footer aktualisieren
+    const updated = new Date().toLocaleString("de-DE", {
+      timeZone: "Atlantic/Canary",
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    document.getElementById("footer-text").textContent =
+      `Quelle: tide-forecast.com · Aktualisiert: ${updated} WET`;
+  }
+
+  document.getElementById("btn-today").onclick = () => showDay(findTodayIndex(window.tideData));
+  document.getElementById("btn-tomorrow").onclick = () => showDay(findTodayIndex(window.tideData) + 1);
+  document.getElementById("btn-after").onclick = () => showDay(findTodayIndex(window.tideData) + 2);
+
+  loadTideData();
+</script>
+
 </body>
 </html>
