@@ -194,8 +194,8 @@
         option.value = d.date;
         option.textContent = dateObj.toLocaleDateString("de-DE", {
           weekday: "long",
-          day: "numeric",
-          month: "long",
+          day: "2-digit",
+          month: "2-digit",
           year: "numeric",
         });
         select.appendChild(option);
@@ -217,8 +217,8 @@
       const dateObj = new Date(day.date);
       dateDisplay.textContent = dateObj.toLocaleDateString("de-DE", {
         weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
+        day: "numeric",
+        month: "long",
         year: "numeric",
       });
 
