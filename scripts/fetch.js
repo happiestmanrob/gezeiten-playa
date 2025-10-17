@@ -17,15 +17,11 @@ async function scrapeTides() {
 
   const days = [];
 
-  // Neuer Selektor: .tide-day bleibt, aber h4.tide-day__date gibt es nicht mehr
   $(".tide-day").each((_, el) => {
-    const title =
-      $(el).find(".tide-day__date").text().trim() ||
-      $(el).find("caption").text().trim(); // Fallback
-
+    // Das Datum steht jetzt in <div class="tide-day__date">
+    const title = $(el).find(".tide-day__date").text().trim();
     if (!title) return;
 
-    // Beispiel: "Friday 17 October 2025"
     const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
     if (!dateMatch) return;
 
@@ -34,7 +30,7 @@ async function scrapeTides() {
 
     const tides = [];
 
-    // Neuer Tabellen-Selektor: war "table.tide-day-tides", ist jetzt "table.tide-table"
+    // Tabellenklasse wurde geändert zu .tide-table
     $(el)
       .find("table.tide-table tbody tr")
       .each((_, row) => {
@@ -49,18 +45,18 @@ async function scrapeTides() {
 
         const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
 
-        // Höhe kann in ft angegeben sein -> in m umrechnen
-        const heightMatch = heightText.match(/([\d.,]+)/);
+        // Höhe ist jetzt meist in ft – konvertiere nach m
+        const match = heightText.match(/([\d.,]+)/);
         let hoehe_m = null;
-        if (heightMatch) {
-          const ft = parseFloat(heightMatch[1].replace(",", "."));
-          hoehe_m = (ft * 0.3048).toFixed(2); // Umrechnung ft → m
+        if (match) {
+          const ft = parseFloat(match[1].replace(",", "."));
+          hoehe_m = (ft * 0.3048).toFixed(2);
         }
 
         if (!hoehe_m) return;
 
         tides.push({
-          zeit: timeText.replace(/^0/, ""), // 00:03 → 0:03
+          zeit: timeText,
           typ,
           hoehe_m: parseFloat(hoehe_m),
         });
@@ -85,7 +81,7 @@ async function scrapeTides() {
     days,
   };
 
-  const outputDir = path.resolve("public");
+  const outputDir = path.resolve("public/data");
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
   const outputFile = path.join(outputDir, "latest.json");
