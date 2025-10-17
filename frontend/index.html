@@ -135,13 +135,15 @@
   <script>
     async function loadTideData() {
       try {
-        // 🔧 KORRIGIERTER PFAD für GitHub Pages:
+        // 🔧 Pfad für GitHub Pages korrigiert:
         const basePath = window.location.pathname.replace(/\/$/, "");
         const response = await fetch(`${basePath}/data/latest.json`);
+
         if (!response.ok) throw new Error("Fehler beim Laden der JSON-Datei.");
 
         const data = await response.json();
-        if (!data.days || data.days.length === 0) throw new Error("Keine Daten gefunden.");
+        if (!data.days || data.days.length === 0)
+          throw new Error("Keine Daten gefunden.");
 
         window.tideData = data.days;
         populateDateSelect(data.days);
@@ -193,7 +195,7 @@
         tr.innerHTML = `
           <td>${t.zeit}</td>
           <td>${t.typ}</td>
-          <td>${t.hoehe_m.toFixed(2)}</td>
+          <td>${t.hoehe_m?.toFixed(2) ?? "-"}</td>
         `;
         tideTable.appendChild(tr);
       });
