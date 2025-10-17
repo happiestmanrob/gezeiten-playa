@@ -6,8 +6,8 @@
   <title>🌊 Gezeiten · Playa del Inglés</title>
   <style>
     body {
-      font-family: "Inter", sans-serif;
-      background-color: #eaf4ff;
+      font-family: "Inter", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #e6f5ff 0%, #d9f0ff 100%);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -19,9 +19,9 @@
       background: white;
       padding: 2rem;
       border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       max-width: 600px;
-      width: 100%;
+      width: 90%;
       text-align: center;
     }
 
@@ -32,21 +32,30 @@
 
     h2 {
       font-size: 1rem;
-      color: #555;
-      margin-bottom: 1rem;
+      color: #666;
+      margin-bottom: 1.2rem;
     }
 
     .tide-icon {
-      font-size: 2rem;
+      font-size: 2.2rem;
+      margin-bottom: 0.3rem;
     }
 
     .status {
-      font-weight: bold;
-      margin-bottom: 0.5rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .status.up {
+      color: #1976d2;
+    }
+
+    .status.down {
+      color: #d32f2f;
     }
 
     .next {
-      color: #666;
+      color: #555;
       font-size: 0.9rem;
       margin-bottom: 1rem;
     }
@@ -54,6 +63,7 @@
     .buttons {
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
@@ -65,6 +75,7 @@
       padding: 0.5rem 1rem;
       cursor: pointer;
       font-weight: 600;
+      transition: all 0.2s ease;
     }
 
     button.active {
@@ -83,17 +94,28 @@
       text-align: left;
       color: #666;
       padding-bottom: 0.5rem;
+      border-bottom: 1px solid #ddd;
     }
 
     td {
-      padding: 0.25rem 0;
+      padding: 0.4rem 0;
       font-size: 0.95rem;
+    }
+
+    tr.low td {
+      color: #d32f2f;
+      font-weight: 600;
+    }
+
+    tr.high td {
+      color: #2e7d32;
+      font-weight: 600;
     }
 
     footer {
       margin-top: 1rem;
       font-size: 0.8rem;
-      color: #888;
+      color: #777;
     }
 
     .error {
@@ -129,19 +151,19 @@
       <tbody id="tide-table"></tbody>
     </table>
 
-    <footer>Quelle: tide-forecast.com</footer>
+    <footer id="footer-text">Quelle: tide-forecast.com</footer>
   </div>
 
   <script>
     async function loadTideData() {
       try {
-        // 🔧 KORRIGIERTER PFAD für GitHub Pages:
         const basePath = window.location.pathname.replace(/\/$/, "");
         const response = await fetch(`${basePath}/data/latest.json`);
         if (!response.ok) throw new Error("Fehler beim Laden der JSON-Datei.");
 
         const data = await response.json();
-        if (!data.days || data.days.length === 0) throw new Error("Keine Daten gefunden.");
+        if (!data.days || data.days.length === 0)
+          throw new Error("Keine Daten gefunden.");
 
         window.tideData = data.days;
         populateDateSelect(data.days);
@@ -167,7 +189,6 @@
         });
         select.appendChild(option);
       });
-
       select.addEventListener("change", () => {
         const index = days.findIndex((d) => d.date === select.value);
         if (index !== -1) showDay(index);
@@ -190,10 +211,12 @@
       tideTable.innerHTML = "";
       day.tides.forEach((t) => {
         const tr = document.createElement("tr");
+        const cls = t.typ === "Niedrigwasser" ? "low" : "high";
+        tr.classList.add(cls);
         tr.innerHTML = `
           <td>${t.zeit}</td>
           <td>${t.typ}</td>
-          <td>${t.hoehe_m.toFixed(2)}</td>
+          <td>${t.hoehe_m?.toFixed(2) ?? "-"}</td>
         `;
         tideTable.appendChild(tr);
       });
@@ -212,14 +235,31 @@
         time: new Date(`${day.date}T${t.zeit}:00`),
       }));
 
-      const nextHigh = tides.find((t) => t.time > now && t.typ === "Hochwasser");
-      const rising = tides.findIndex((t) => t.time > now) % 2 === 1;
+      const nextEvent = tides.find((t) => t.time > now);
+      const falling = nextEvent?.typ === "Niedrigwasser";
 
-      status.textContent = rising ? "Das Wasser steigt" : "Das Wasser fällt";
-      icon.textContent = rising ? "⬆️" : "⬇️";
-      next.textContent = nextHigh
-        ? `nächstes Hochwasser um ${nextHigh.zeit} Uhr`
-        : "nächstes Hochwasser: –";
+      if (falling) {
+        status.textContent = "Das Wasser fällt";
+        status.className = "status down";
+        icon.textContent = "⬇️";
+        next.textContent = `nächstes Niedrigwasser um ${nextEvent?.zeit ?? "–:–"} Uhr`;
+      } else {
+        status.textContent = "Das Wasser steigt";
+        status.className = "status up";
+        icon.textContent = "⬆️";
+        next.textContent = `nächstes Hochwasser um ${nextEvent?.zeit ?? "–:–"} Uhr`;
+      }
+
+      const footer = document.getElementById("footer-text");
+      const updated = new Date().toLocaleString("de-DE", {
+        timeZone: "Europe/London",
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      footer.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${updated} WET`;
     }
 
     document.getElementById("btn-today").onclick = () => showDay(0);
