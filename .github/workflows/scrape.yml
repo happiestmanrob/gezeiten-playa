@@ -29,10 +29,10 @@ jobs:
       - name: Copy frontend & data to public
         run: |
           echo "📦 Kopiere Frontend-Dateien und Daten nach public..."
-          mkdir -p public
-          cp -r frontend/* public/
           mkdir -p public/data
-          cp -r public/data/* public/data/ || echo "Keine Daten gefunden."
+          cp -r frontend/* public/
+          cp -r data/* public/data/ || echo "⚠️ Keine neuen Datendateien gefunden"
+
 
       - name: Verify output files
         run: |
