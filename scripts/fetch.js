@@ -1,90 +1,67 @@
-// scripts/fetch.js
-import fs from "fs";
-import path from "path";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
+import fs from "fs";
 
-const URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
+// Hilfsfunktion: "12:09 PM" / "6:35 AM" -> "12:09" / "06:35" (24h)
+function to24h(timeStr) {
+  if (!timeStr) return "";
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!m) return timeStr.trim();
+  let [_, h, min, mer] = m;
+  h = parseInt(h, 10);
+  if (mer) {
+    mer = mer.toUpperCase();
+    if (mer === "PM" && h < 12) h += 12;
+    if (mer === "AM" && h === 12) h = 0;
+  }
+  return `${h.toString().padStart(2, "0")}:${min}`;
+}
 
 async function scrapeTides() {
-  console.log("🌊 Lade Gezeiten für Playa del Inglés ...");
-  console.log("🔗 URL:", URL);
-
-  const res = await fetch(URL);
-  if (!res.ok) throw new Error(`HTTP ${res.status} beim Laden der Seite.`);
-  const html = await res.text();
+  const url = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
+  const response = await fetch(url);
+  const html = await response.text();
   const $ = cheerio.load(html);
 
   const days = [];
 
-  // Jeder Tag ist in einem .tide-day-Container
-  $(".tide-day").each((_, el) => {
-    const title = $(el).find("h4.tide-day__date").text().trim();
-    if (!title.includes("Playa del Ingles")) return;
+  $(".tide-day").each((i, el) => {
+    const date = $(el).find(".tide-day__date").text().trim().replace("Tide Times for Playa del Ingles:", "").trim();
+    const entries = [];
 
-    const dateMatch = title.match(/([A-Za-z]+day)\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
-    if (!dateMatch) return;
-
-    const [, , day, month, year] = dateMatch;
-    const dateISO = new Date(`${month} ${day}, ${year}`).toISOString().split("T")[0];
-
-    const tides = [];
-
-    // Tabellenzeilen durchlaufen
     $(el)
-      .find("table.tide-day-tides tbody tr")
-      .each((_, row) => {
-        const cols = $(row).find("td");
-        if (cols.length < 3) return;
-
-        const typeText = $(cols[0]).text().trim();
-        const timeText = $(cols[1]).text().trim().split(/\s+/)[0];
-        const heightText = $(cols[2]).text().trim();
-
-        if (!typeText || !timeText || !heightText) return;
-
-        const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
-        const meterMatch = heightText.match(/([\d.]+)\s*m/);
-        const hoehe_m = meterMatch ? parseFloat(meterMatch[1]) : null;
-
-        if (!hoehe_m) return;
-
-        tides.push({
-          zeit: timeText.replace(/^0/, ""),
-          typ,
-          hoehe_m,
-        });
+      .find("table.tide-day-tides tr")
+      .each((j, tr) => {
+        const tds = $(tr).find("td");
+        if (tds.length >= 3) {
+          const type = $(tds[0]).text().trim();
+          const time = to24h($(tds[1]).text().trim());
+          const heightText = $(tds[2]).text().trim();
+          const height = parseFloat(heightText);
+          if (type && !isNaN(height)) {
+            entries.push({ time, type, height });
+          }
+        }
       });
 
-    if (tides.length) {
-      days.push({ date: dateISO, tides });
-      console.log(`📅 ${dateISO}: ${tides.length} Einträge`);
+    if (entries.length > 0) {
+      days.push({
+        date,
+        entries,
+      });
     }
   });
 
-  if (!days.length) {
-    throw new Error("❌ Keine Gezeiten-Tabelle gefunden!");
-  }
+  const updatedAt = new Date().toLocaleString("de-DE", {
+    timeZone: "Atlantic/Canary",
+  });
 
-  const result = {
-    meta: {
-      location: "Playa del Inglés",
-      timezone: "Atlantic/Canary",
-      generatedAt: new Date().toISOString(),
-    },
-    days,
-  };
+  fs.writeFileSync(
+    "./data/latest.json",
+    JSON.stringify({ updatedAt, days }, null, 2)
+  );
 
-  const outputDir = path.resolve("public");
-  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-
-  const outputFile = path.join(outputDir, "latest.json");
-  fs.writeFileSync(outputFile, JSON.stringify(result, null, 2), "utf8");
-
-  console.log(`✅ Erfolgreich geschrieben: ${outputFile} (${days.length} Tage)`);
+  console.log(`✅ Gespeichert: ${days.length} Tage (${updatedAt})`);
 }
 
-scrapeTides().catch((err) => {
-  console.error("🚨 Fehler:", err.message);
-  process.exit(1);
-});
+scrapeTides().catch((err) => console.error(err));
