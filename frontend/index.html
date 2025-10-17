@@ -17,7 +17,7 @@
 
     .card {
       background: white;
-      padding: 2rem;
+      padding: 1.8rem 2rem;
       border-radius: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       max-width: 600px;
@@ -27,13 +27,13 @@
 
     h1 {
       font-size: 1.8rem;
-      margin-bottom: 0.5rem;
+      margin: 0.2rem 0 0.3rem 0;
     }
 
     h2 {
       font-size: 1rem;
       color: #666;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
     }
 
     .tide-icon {
@@ -43,11 +43,11 @@
 
     .status {
       font-weight: 700;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.3rem;
     }
 
     .status.up {
-      color: #1976d2;
+      color: #2e7d32;
     }
 
     .status.down {
@@ -55,7 +55,7 @@
     }
 
     .next {
-      color: #555;
+      color: #000;
       font-size: 0.9rem;
       margin-bottom: 1rem;
     }
@@ -87,11 +87,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
+      text-align: center;
       margin-top: 1rem;
     }
 
     th {
-      text-align: left;
       color: #666;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid #ddd;
@@ -155,6 +156,8 @@
   </div>
 
   <script>
+    let activeIndex = 0;
+
     async function loadTideData() {
       try {
         const basePath = window.location.pathname.replace(/\/$/, "");
@@ -196,6 +199,9 @@
     }
 
     function showDay(index) {
+      activeIndex = index;
+      updateButtons();
+
       const day = window.tideData[index];
       const dateDisplay = document.getElementById("date-display");
       const tideTable = document.getElementById("tide-table");
@@ -213,8 +219,9 @@
         const tr = document.createElement("tr");
         const cls = t.typ === "Niedrigwasser" ? "low" : "high";
         tr.classList.add(cls);
+        const timeFormatted = formatTime(t.zeit);
         tr.innerHTML = `
-          <td>${t.zeit}</td>
+          <td>${timeFormatted}</td>
           <td>${t.typ}</td>
           <td>${t.hoehe_m?.toFixed(2) ?? "-"}</td>
         `;
@@ -222,6 +229,12 @@
       });
 
       updateStatus(day);
+    }
+
+    function updateButtons() {
+      document.getElementById("btn-today").classList.toggle("active", activeIndex === 0);
+      document.getElementById("btn-tomorrow").classList.toggle("active", activeIndex === 1);
+      document.getElementById("btn-after").classList.toggle("active", activeIndex === 2);
     }
 
     function updateStatus(day) {
@@ -232,23 +245,20 @@
       const now = new Date();
       const tides = day.tides.map((t) => ({
         ...t,
-        time: new Date(`${day.date}T${t.zeit}:00`),
+        time: new Date(`${day.date}T${formatTime(t.zeit)}:00`),
       }));
 
-      const nextEvent = tides.find((t) => t.time > now);
-      const falling = nextEvent?.typ === "Niedrigwasser";
+      let nextEvent = tides.find((t) => t.time > now);
+      if (!nextEvent) nextEvent = tides[0]; // fallback for future days
 
-      if (falling) {
-        status.textContent = "Das Wasser fällt";
-        status.className = "status down";
-        icon.textContent = "⬇️";
-        next.textContent = `nächstes Niedrigwasser um ${nextEvent?.zeit ?? "–:–"} Uhr`;
-      } else {
-        status.textContent = "Das Wasser steigt";
-        status.className = "status up";
-        icon.textContent = "⬆️";
-        next.textContent = `nächstes Hochwasser um ${nextEvent?.zeit ?? "–:–"} Uhr`;
-      }
+      const falling = nextEvent.typ === "Niedrigwasser";
+
+      status.textContent = falling ? "Das Wasser fällt" : "Das Wasser steigt";
+      status.className = falling ? "status down" : "status up";
+      icon.textContent = falling ? "⬇️" : "⬆️";
+
+      const eventText = falling ? "Niedrigwasser" : "Hochwasser";
+      next.textContent = `nächstes ${eventText} um ${formatTime(nextEvent.zeit)} Uhr`;
 
       const footer = document.getElementById("footer-text");
       const updated = new Date().toLocaleString("de-DE", {
@@ -260,6 +270,11 @@
         year: "numeric",
       });
       footer.textContent = `Quelle: tide-forecast.com · Aktualisiert: ${updated} WET`;
+    }
+
+    function formatTime(timeStr) {
+      const [h, m] = timeStr.split(":").map(Number);
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
     }
 
     document.getElementById("btn-today").onclick = () => showDay(0);
