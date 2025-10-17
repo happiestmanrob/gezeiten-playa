@@ -1,688 +1,689 @@
 {
-  "updatedAt": "17.10.2025, 10:22:55",
+  "timezone": "WET",
+  "updatedAt": "17.10.2025, 10:56:56",
   "days": [
     {
-      "date": "Tide Times for Playa del Ingles (tomorrow): Saturday 18 October 2025",
+      "date": "2025-10-18",
       "entries": [
         {
           "time": "00:03",
-          "type": "High Tide",
-          "height": 5.58
+          "type": "Hochwasser",
+          "height_m": 5.58
         },
         {
           "time": "06:01",
-          "type": "Low Tide",
-          "height": 1.31
+          "type": "Niedrigwasser",
+          "height_m": 1.31
         },
         {
           "time": "12:09",
-          "type": "High Tide",
-          "height": 6.2
+          "type": "Hochwasser",
+          "height_m": 6.2
         },
         {
           "time": "18:28",
-          "type": "Low Tide",
-          "height": 0.72
+          "type": "Niedrigwasser",
+          "height_m": 0.72
         }
       ]
     },
     {
-      "date": "Sunday 19 October 2025",
+      "date": "2025-10-19",
       "entries": [
         {
           "time": "00:36",
-          "type": "High Tide",
-          "height": 5.91
+          "type": "Hochwasser",
+          "height_m": 5.91
         },
         {
           "time": "06:35",
-          "type": "Low Tide",
-          "height": 0.98
+          "type": "Niedrigwasser",
+          "height_m": 0.98
         },
         {
           "time": "12:43",
-          "type": "High Tide",
-          "height": 6.37
+          "type": "Hochwasser",
+          "height_m": 6.37
         },
         {
           "time": "18:56",
-          "type": "Low Tide",
-          "height": 0.56
+          "type": "Niedrigwasser",
+          "height_m": 0.56
         }
       ]
     },
     {
-      "date": "Monday 20 October 2025",
+      "date": "2025-10-20",
       "entries": [
         {
           "time": "01:05",
-          "type": "High Tide",
-          "height": 6.17
+          "type": "Hochwasser",
+          "height_m": 6.17
         },
         {
           "time": "07:06",
-          "type": "Low Tide",
-          "height": 0.75
+          "type": "Niedrigwasser",
+          "height_m": 0.75
         },
         {
           "time": "13:15",
-          "type": "High Tide",
-          "height": 6.46
+          "type": "Hochwasser",
+          "height_m": 6.46
         },
         {
           "time": "19:23",
-          "type": "Low Tide",
-          "height": 0.46
+          "type": "Niedrigwasser",
+          "height_m": 0.46
         }
       ]
     },
     {
-      "date": "Tuesday 21 October 2025",
+      "date": "2025-10-21",
       "entries": [
         {
           "time": "01:34",
-          "type": "High Tide",
-          "height": 6.37
+          "type": "Hochwasser",
+          "height_m": 6.37
         },
         {
           "time": "07:36",
-          "type": "Low Tide",
-          "height": 0.59
+          "type": "Niedrigwasser",
+          "height_m": 0.59
         },
         {
           "time": "13:45",
-          "type": "High Tide",
-          "height": 6.43
+          "type": "Hochwasser",
+          "height_m": 6.43
         },
         {
           "time": "19:50",
-          "type": "Low Tide",
-          "height": 0.47
+          "type": "Niedrigwasser",
+          "height_m": 0.47
         }
       ]
     },
     {
-      "date": "Wednesday 22 October 2025",
+      "date": "2025-10-22",
       "entries": [
         {
           "time": "02:01",
-          "type": "High Tide",
-          "height": 6.43
+          "type": "Hochwasser",
+          "height_m": 6.43
         },
         {
           "time": "08:05",
-          "type": "Low Tide",
-          "height": 0.56
+          "type": "Niedrigwasser",
+          "height_m": 0.56
         },
         {
           "time": "14:14",
-          "type": "High Tide",
-          "height": 6.3
+          "type": "Hochwasser",
+          "height_m": 6.3
         },
         {
           "time": "20:17",
-          "type": "Low Tide",
-          "height": 0.56
+          "type": "Niedrigwasser",
+          "height_m": 0.56
         }
       ]
     },
     {
-      "date": "Thursday 23 October 2025",
+      "date": "2025-10-23",
       "entries": [
         {
           "time": "02:29",
-          "type": "High Tide",
-          "height": 6.37
+          "type": "Hochwasser",
+          "height_m": 6.37
         },
         {
           "time": "08:35",
-          "type": "Low Tide",
-          "height": 0.59
+          "type": "Niedrigwasser",
+          "height_m": 0.59
         },
         {
           "time": "14:44",
-          "type": "High Tide",
-          "height": 6.07
+          "type": "Hochwasser",
+          "height_m": 6.07
         },
         {
           "time": "20:44",
-          "type": "Low Tide",
-          "height": 0.75
+          "type": "Niedrigwasser",
+          "height_m": 0.75
         }
       ]
     },
     {
-      "date": "Friday 24 October 2025",
+      "date": "2025-10-24",
       "entries": [
         {
           "time": "02:57",
-          "type": "High Tide",
-          "height": 6.2
+          "type": "Hochwasser",
+          "height_m": 6.2
         },
         {
           "time": "09:05",
-          "type": "Low Tide",
-          "height": 0.79
+          "type": "Niedrigwasser",
+          "height_m": 0.79
         },
         {
           "time": "15:15",
-          "type": "High Tide",
-          "height": 5.74
+          "type": "Hochwasser",
+          "height_m": 5.74
         },
         {
           "time": "21:12",
-          "type": "Low Tide",
-          "height": 1.05
+          "type": "Niedrigwasser",
+          "height_m": 1.05
         }
       ]
     },
     {
-      "date": "Saturday 25 October 2025",
+      "date": "2025-10-25",
       "entries": [
         {
           "time": "03:27",
-          "type": "High Tide",
-          "height": 5.94
+          "type": "Hochwasser",
+          "height_m": 5.94
         },
         {
           "time": "09:37",
-          "type": "Low Tide",
-          "height": 1.08
+          "type": "Niedrigwasser",
+          "height_m": 1.08
         },
         {
           "time": "15:46",
-          "type": "High Tide",
-          "height": 5.38
+          "type": "Hochwasser",
+          "height_m": 5.38
         },
         {
           "time": "21:42",
-          "type": "Low Tide",
-          "height": 1.35
+          "type": "Niedrigwasser",
+          "height_m": 1.35
         }
       ]
     },
     {
-      "date": "Sunday 26 October 2025",
+      "date": "2025-10-26",
       "entries": [
         {
           "time": "03:00",
-          "type": "High Tide",
-          "height": 5.64
+          "type": "Hochwasser",
+          "height_m": 5.64
         },
         {
           "time": "09:12",
-          "type": "Low Tide",
-          "height": 1.44
+          "type": "Niedrigwasser",
+          "height_m": 1.44
         },
         {
           "time": "15:21",
-          "type": "High Tide",
-          "height": 4.95
+          "type": "Hochwasser",
+          "height_m": 4.95
         },
         {
           "time": "21:16",
-          "type": "Low Tide",
-          "height": 1.71
+          "type": "Niedrigwasser",
+          "height_m": 1.71
         }
       ]
     },
     {
-      "date": "Monday 27 October 2025",
+      "date": "2025-10-27",
       "entries": [
         {
           "time": "03:38",
-          "type": "High Tide",
-          "height": 5.28
+          "type": "Hochwasser",
+          "height_m": 5.28
         },
         {
           "time": "09:54",
-          "type": "Low Tide",
-          "height": 1.84
+          "type": "Niedrigwasser",
+          "height_m": 1.84
         },
         {
           "time": "16:03",
-          "type": "High Tide",
-          "height": 4.59
+          "type": "Hochwasser",
+          "height_m": 4.59
         },
         {
           "time": "21:57",
-          "type": "Low Tide",
-          "height": 2.07
+          "type": "Niedrigwasser",
+          "height_m": 2.07
         }
       ]
     },
     {
-      "date": "Tuesday 28 October 2025",
+      "date": "2025-10-28",
       "entries": [
         {
           "time": "04:28",
-          "type": "High Tide",
-          "height": 4.95
+          "type": "Hochwasser",
+          "height_m": 4.95
         },
         {
           "time": "10:52",
-          "type": "Low Tide",
-          "height": 2.23
+          "type": "Niedrigwasser",
+          "height_m": 2.23
         },
         {
           "time": "17:06",
-          "type": "High Tide",
-          "height": 4.27
+          "type": "Hochwasser",
+          "height_m": 4.27
         },
         {
           "time": "22:58",
-          "type": "Low Tide",
-          "height": 2.43
+          "type": "Niedrigwasser",
+          "height_m": 2.43
         }
       ]
     },
     {
-      "date": "Wednesday 29 October 2025",
+      "date": "2025-10-29",
       "entries": [
         {
           "time": "05:42",
-          "type": "High Tide",
-          "height": 4.72
+          "type": "Hochwasser",
+          "height_m": 4.72
         },
         {
           "time": "12:19",
-          "type": "Low Tide",
-          "height": 2.4
+          "type": "Niedrigwasser",
+          "height_m": 2.4
         },
         {
           "time": "18:40",
-          "type": "High Tide",
-          "height": 4.17
+          "type": "Hochwasser",
+          "height_m": 4.17
         }
       ]
     },
     {
-      "date": "Thursday 30 October 2025",
+      "date": "2025-10-30",
       "entries": [
         {
           "time": "00:32",
-          "type": "Low Tide",
-          "height": 2.56
+          "type": "Niedrigwasser",
+          "height_m": 2.56
         },
         {
           "time": "07:13",
-          "type": "High Tide",
-          "height": 4.79
+          "type": "Hochwasser",
+          "height_m": 4.79
         },
         {
           "time": "13:55",
-          "type": "Low Tide",
-          "height": 2.2
+          "type": "Niedrigwasser",
+          "height_m": 2.2
         },
         {
           "time": "20:13",
-          "type": "High Tide",
-          "height": 4.43
+          "type": "Hochwasser",
+          "height_m": 4.43
         }
       ]
     },
     {
-      "date": "Friday 31 October 2025",
+      "date": "2025-10-31",
       "entries": [
         {
           "time": "02:07",
-          "type": "Low Tide",
-          "height": 2.4
+          "type": "Niedrigwasser",
+          "height_m": 2.4
         },
         {
           "time": "08:29",
-          "type": "High Tide",
-          "height": 5.15
+          "type": "Hochwasser",
+          "height_m": 5.15
         },
         {
           "time": "15:03",
-          "type": "Low Tide",
-          "height": 1.71
+          "type": "Niedrigwasser",
+          "height_m": 1.71
         },
         {
           "time": "21:18",
-          "type": "High Tide",
-          "height": 4.92
+          "type": "Hochwasser",
+          "height_m": 4.92
         }
       ]
     },
     {
-      "date": "Saturday 01 November 2025",
+      "date": "2025-11-01",
       "entries": [
         {
           "time": "03:14",
-          "type": "Low Tide",
-          "height": 1.97
+          "type": "Niedrigwasser",
+          "height_m": 1.97
         },
         {
           "time": "09:27",
-          "type": "High Tide",
-          "height": 5.64
+          "type": "Hochwasser",
+          "height_m": 5.64
         },
         {
           "time": "15:53",
-          "type": "Low Tide",
-          "height": 1.12
+          "type": "Niedrigwasser",
+          "height_m": 1.12
         },
         {
           "time": "22:08",
-          "type": "High Tide",
-          "height": 5.54
+          "type": "Hochwasser",
+          "height_m": 5.54
         }
       ]
     },
     {
-      "date": "Sunday 02 November 2025",
+      "date": "2025-11-02",
       "entries": [
         {
           "time": "04:05",
-          "type": "Low Tide",
-          "height": 1.41
+          "type": "Niedrigwasser",
+          "height_m": 1.41
         },
         {
           "time": "10:15",
-          "type": "High Tide",
-          "height": 6.2
+          "type": "Hochwasser",
+          "height_m": 6.2
         },
         {
           "time": "16:37",
-          "type": "Low Tide",
-          "height": 0.52
+          "type": "Niedrigwasser",
+          "height_m": 0.52
         },
         {
           "time": "22:51",
-          "type": "High Tide",
-          "height": 6.1
+          "type": "Hochwasser",
+          "height_m": 6.1
         }
       ]
     },
     {
-      "date": "Monday 03 November 2025",
+      "date": "2025-11-03",
       "entries": [
         {
           "time": "04:51",
-          "type": "Low Tide",
-          "height": 0.89
+          "type": "Niedrigwasser",
+          "height_m": 0.89
         },
         {
           "time": "11:01",
-          "type": "High Tide",
-          "height": 6.66
+          "type": "Hochwasser",
+          "height_m": 6.66
         },
         {
           "time": "17:18",
-          "type": "Low Tide",
-          "height": 0.07
+          "type": "Niedrigwasser",
+          "height_m": 0.07
         },
         {
           "time": "23:32",
-          "type": "High Tide",
-          "height": 6.59
+          "type": "Hochwasser",
+          "height_m": 6.59
         }
       ]
     },
     {
-      "date": "Tuesday 04 November 2025",
+      "date": "2025-11-04",
       "entries": [
         {
           "time": "05:34",
-          "type": "Low Tide",
-          "height": 0.36
+          "type": "Niedrigwasser",
+          "height_m": 0.36
         },
         {
           "time": "11:45",
-          "type": "High Tide",
-          "height": 6.99
+          "type": "Hochwasser",
+          "height_m": 6.99
         },
         {
           "time": "17:58",
-          "type": "Low Tide",
-          "height": -0.2
+          "type": "Niedrigwasser",
+          "height_m": -0.2
         }
       ]
     },
     {
-      "date": "Wednesday 05 November 2025",
+      "date": "2025-11-05",
       "entries": [
         {
           "time": "00:12",
-          "type": "High Tide",
-          "height": 6.96
+          "type": "Hochwasser",
+          "height_m": 6.96
         },
         {
           "time": "06:17",
-          "type": "Low Tide",
-          "height": 0
+          "type": "Niedrigwasser",
+          "height_m": 0
         },
         {
           "time": "12:29",
-          "type": "High Tide",
-          "height": 7.12
+          "type": "Hochwasser",
+          "height_m": 7.12
         },
         {
           "time": "18:39",
-          "type": "Low Tide",
-          "height": -0.26
+          "type": "Niedrigwasser",
+          "height_m": -0.26
         }
       ]
     },
     {
-      "date": "Thursday 06 November 2025",
+      "date": "2025-11-06",
       "entries": [
         {
           "time": "00:53",
-          "type": "High Tide",
-          "height": 7.12
+          "type": "Hochwasser",
+          "height_m": 7.12
         },
         {
           "time": "07:01",
-          "type": "Low Tide",
-          "height": -0.2
+          "type": "Niedrigwasser",
+          "height_m": -0.2
         },
         {
           "time": "13:14",
-          "type": "High Tide",
-          "height": 7.02
+          "type": "Hochwasser",
+          "height_m": 7.02
         },
         {
           "time": "19:20",
-          "type": "Low Tide",
-          "height": -0.1
+          "type": "Niedrigwasser",
+          "height_m": -0.1
         }
       ]
     },
     {
-      "date": "Friday 07 November 2025",
+      "date": "2025-11-07",
       "entries": [
         {
           "time": "01:35",
-          "type": "High Tide",
-          "height": 7.09
+          "type": "Hochwasser",
+          "height_m": 7.09
         },
         {
           "time": "07:46",
-          "type": "Low Tide",
-          "height": -0.16
+          "type": "Niedrigwasser",
+          "height_m": -0.16
         },
         {
           "time": "14:01",
-          "type": "High Tide",
-          "height": 6.69
+          "type": "Hochwasser",
+          "height_m": 6.69
         },
         {
           "time": "20:03",
-          "type": "Low Tide",
-          "height": 0.26
+          "type": "Niedrigwasser",
+          "height_m": 0.26
         }
       ]
     },
     {
-      "date": "Saturday 08 November 2025",
+      "date": "2025-11-08",
       "entries": [
         {
           "time": "02:19",
-          "type": "High Tide",
-          "height": 6.89
+          "type": "Hochwasser",
+          "height_m": 6.89
         },
         {
           "time": "08:35",
-          "type": "Low Tide",
-          "height": 0.1
+          "type": "Niedrigwasser",
+          "height_m": 0.1
         },
         {
           "time": "14:50",
-          "type": "High Tide",
-          "height": 6.17
+          "type": "Hochwasser",
+          "height_m": 6.17
         },
         {
           "time": "20:47",
-          "type": "Low Tide",
-          "height": 0.75
+          "type": "Niedrigwasser",
+          "height_m": 0.75
         }
       ]
     },
     {
-      "date": "Sunday 09 November 2025",
+      "date": "2025-11-09",
       "entries": [
         {
           "time": "03:07",
-          "type": "High Tide",
-          "height": 6.53
+          "type": "Hochwasser",
+          "height_m": 6.53
         },
         {
           "time": "09:27",
-          "type": "Low Tide",
-          "height": 0.56
+          "type": "Niedrigwasser",
+          "height_m": 0.56
         },
         {
           "time": "15:44",
-          "type": "High Tide",
-          "height": 5.58
+          "type": "Hochwasser",
+          "height_m": 5.58
         },
         {
           "time": "21:36",
-          "type": "Low Tide",
-          "height": 1.28
+          "type": "Niedrigwasser",
+          "height_m": 1.28
         }
       ]
     },
     {
-      "date": "Monday 10 November 2025",
+      "date": "2025-11-10",
       "entries": [
         {
           "time": "04:01",
-          "type": "High Tide",
-          "height": 6.07
+          "type": "Hochwasser",
+          "height_m": 6.07
         },
         {
           "time": "10:28",
-          "type": "Low Tide",
-          "height": 1.08
+          "type": "Niedrigwasser",
+          "height_m": 1.08
         },
         {
           "time": "16:46",
-          "type": "High Tide",
-          "height": 4.99
+          "type": "Hochwasser",
+          "height_m": 4.99
         },
         {
           "time": "22:34",
-          "type": "Low Tide",
-          "height": 1.8
+          "type": "Niedrigwasser",
+          "height_m": 1.8
         }
       ]
     },
     {
-      "date": "Tuesday 11 November 2025",
+      "date": "2025-11-11",
       "entries": [
         {
           "time": "05:06",
-          "type": "High Tide",
-          "height": 5.64
+          "type": "Hochwasser",
+          "height_m": 5.64
         },
         {
           "time": "11:44",
-          "type": "Low Tide",
-          "height": 1.54
+          "type": "Niedrigwasser",
+          "height_m": 1.54
         },
         {
           "time": "18:03",
-          "type": "High Tide",
-          "height": 4.59
+          "type": "Hochwasser",
+          "height_m": 4.59
         },
         {
           "time": "23:50",
-          "type": "Low Tide",
-          "height": 2.23
+          "type": "Niedrigwasser",
+          "height_m": 2.23
         }
       ]
     },
     {
-      "date": "Wednesday 12 November 2025",
+      "date": "2025-11-12",
       "entries": [
         {
           "time": "06:24",
-          "type": "High Tide",
-          "height": 5.35
+          "type": "Hochwasser",
+          "height_m": 5.35
         },
         {
           "time": "13:13",
-          "type": "Low Tide",
-          "height": 1.74
+          "type": "Niedrigwasser",
+          "height_m": 1.74
         },
         {
           "time": "19:30",
-          "type": "High Tide",
-          "height": 4.49
+          "type": "Hochwasser",
+          "height_m": 4.49
         }
       ]
     },
     {
-      "date": "Thursday 13 November 2025",
+      "date": "2025-11-13",
       "entries": [
         {
           "time": "01:22",
-          "type": "Low Tide",
-          "height": 2.36
+          "type": "Niedrigwasser",
+          "height_m": 2.36
         },
         {
           "time": "07:46",
-          "type": "High Tide",
-          "height": 5.28
+          "type": "Hochwasser",
+          "height_m": 5.28
         },
         {
           "time": "14:34",
-          "type": "Low Tide",
-          "height": 1.71
+          "type": "Niedrigwasser",
+          "height_m": 1.71
         },
         {
           "time": "20:47",
-          "type": "High Tide",
-          "height": 4.69
+          "type": "Hochwasser",
+          "height_m": 4.69
         }
       ]
     },
     {
-      "date": "Friday 14 November 2025",
+      "date": "2025-11-14",
       "entries": [
         {
           "time": "02:43",
-          "type": "Low Tide",
-          "height": 2.2
+          "type": "Niedrigwasser",
+          "height_m": 2.2
         },
         {
           "time": "08:57",
-          "type": "High Tide",
-          "height": 5.38
+          "type": "Hochwasser",
+          "height_m": 5.38
         },
         {
           "time": "15:32",
-          "type": "Low Tide",
-          "height": 1.51
+          "type": "Niedrigwasser",
+          "height_m": 1.51
         },
         {
           "time": "21:44",
-          "type": "High Tide",
-          "height": 5.02
+          "type": "Hochwasser",
+          "height_m": 5.02
         }
       ]
     }
