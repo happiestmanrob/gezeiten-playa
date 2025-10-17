@@ -1,18 +1,26 @@
 // scripts/fetch.js
 import fs from "fs";
 import path from "path";
-import fetch from "node-fetch";
-import * as cheerio from "cheerio";
+import puppeteer from "puppeteer";
 
 const URL = "https://www.tide-forecast.com/locations/Playa-del-Ingles/tides/latest";
 
 async function scrapeTides() {
-  console.log("🌊 Lade Gezeiten für Playa del Inglés ...");
+  console.log("🌊 Starte Puppeteer und lade Gezeiten für Playa del Inglés...");
   console.log("🔗 URL:", URL);
 
-  const res = await fetch(URL);
-  if (!res.ok) throw new Error(`HTTP ${res.status} beim Laden der Seite.`);
-  const html = await res.text();
+  const browser = await puppeteer.launch({ headless: "new" });
+  const page = await browser.newPage();
+  await page.goto(URL, { waitUntil: "networkidle2", timeout: 60000 });
+
+  // Warte ein paar Sekunden, bis die Tabelle gerendert ist
+  await page.waitForSelector(".tide-day__table", { timeout: 20000 });
+
+  const html = await page.content();
+  await browser.close();
+
+  // Jetzt mit cheerio parsen
+  const cheerio = await import("cheerio");
   const $ = cheerio.load(html);
 
   const days = [];
@@ -28,7 +36,6 @@ async function scrapeTides() {
 
     const tides = [];
 
-    // neue Struktur: .tide-day__table
     $(el)
       .find(".tide-day__table tbody tr")
       .each((_, row) => {
@@ -43,7 +50,6 @@ async function scrapeTides() {
 
         const typ = typeText.includes("High") ? "Hochwasser" : "Niedrigwasser";
 
-        // ft → m konvertieren
         const match = heightText.match(/([\d.,]+)/);
         let hoehe_m = null;
         if (match) {
