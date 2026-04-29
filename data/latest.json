@@ -2,29 +2,9 @@
   "meta": {
     "location": "Playa del Inglés",
     "timezone": "Atlantic/Canary",
-    "generatedAt": "2026-04-28T08:23:25.537Z"
+    "generatedAt": "2026-04-29T08:14:49.103Z"
   },
   "days": [
-    {
-      "date": "2026-04-28",
-      "tides": [
-        {
-          "zeit": "06:04",
-          "typ": "Niedrigwasser",
-          "hoehe_m": 0.26
-        },
-        {
-          "zeit": "12:14",
-          "typ": "Hochwasser",
-          "hoehe_m": 1.76
-        },
-        {
-          "zeit": "18:14",
-          "typ": "Niedrigwasser",
-          "hoehe_m": 0.36
-        }
-      ]
-    },
     {
       "date": "2026-04-29",
       "tides": [
@@ -682,6 +662,76 @@
           "zeit": "22:12",
           "typ": "Hochwasser",
           "hoehe_m": 1.68
+        }
+      ]
+    },
+    {
+      "date": "2026-05-26",
+      "tides": [
+        {
+          "zeit": "04:41",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.43
+        },
+        {
+          "zeit": "10:55",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.6
+        },
+        {
+          "zeit": "16:57",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.54
+        },
+        {
+          "zeit": "23:06",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.69
+        }
+      ]
+    },
+    {
+      "date": "2026-05-27",
+      "tides": [
+        {
+          "zeit": "05:24",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.39
+        },
+        {
+          "zeit": "11:39",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.68
+        },
+        {
+          "zeit": "17:44",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.46
+        },
+        {
+          "zeit": "23:51",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.7
+        }
+      ]
+    },
+    {
+      "date": "2026-05-28",
+      "tides": [
+        {
+          "zeit": "06:02",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.36
+        },
+        {
+          "zeit": "12:17",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.75
+        },
+        {
+          "zeit": "18:25",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.39
         }
       ]
     }
