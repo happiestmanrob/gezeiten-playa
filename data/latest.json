@@ -2,34 +2,9 @@
   "meta": {
     "location": "Playa del Inglés",
     "timezone": "Atlantic/Canary",
-    "generatedAt": "2026-08-26T06:44:31.818Z"
+    "generatedAt": "2026-08-27T17:20:12.677Z"
   },
   "days": [
-    {
-      "date": "2026-08-26",
-      "tides": [
-        {
-          "zeit": "00:59",
-          "typ": "Hochwasser",
-          "hoehe_m": 1.66
-        },
-        {
-          "zeit": "06:55",
-          "typ": "Niedrigwasser",
-          "hoehe_m": 0.36
-        },
-        {
-          "zeit": "13:10",
-          "typ": "Hochwasser",
-          "hoehe_m": 1.9
-        },
-        {
-          "zeit": "19:25",
-          "typ": "Niedrigwasser",
-          "hoehe_m": 0.24
-        }
-      ]
-    },
     {
       "date": "2026-08-27",
       "tides": [
@@ -707,6 +682,31 @@
           "zeit": "18:21",
           "typ": "Niedrigwasser",
           "hoehe_m": 0.33
+        }
+      ]
+    },
+    {
+      "date": "2026-09-24",
+      "tides": [
+        {
+          "zeit": "00:27",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.7
+        },
+        {
+          "zeit": "06:24",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.36
+        },
+        {
+          "zeit": "12:35",
+          "typ": "Hochwasser",
+          "hoehe_m": 1.92
+        },
+        {
+          "zeit": "18:51",
+          "typ": "Niedrigwasser",
+          "hoehe_m": 0.19
         }
       ]
     }
